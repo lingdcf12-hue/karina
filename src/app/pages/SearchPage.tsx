@@ -42,7 +42,7 @@ export function SearchPage() {
     
     setLoading(true);
     const handler = setTimeout(() => {
-      fetch(`http://localhost:3005/api/search?q=${encodeURIComponent(searchQuery)}`)
+      fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
         .then((res) => res.json())
         .then((data) => {
           setTracks(data);

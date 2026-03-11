@@ -34,7 +34,7 @@ export function HomeGrid() {
   const playlists = collection.filter(item => item.type === 'Playlist' && item.id !== 'fav');
 
   useEffect(() => {
-    fetch('http://localhost:3005/api/tracks')
+    fetch('/api/tracks')
       .then((res) => res.json())
       .then((data) => {
         setTracks(data);

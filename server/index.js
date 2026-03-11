@@ -34,6 +34,11 @@ app.get('/api/search', async (req, res) => {
     const search = await yt.search(query, { type: 'video' });
     const videos = search.videos.slice(0, 15);
 
+    // Get the base URL from the request host to make it work on Vercel and Local
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const host = req.headers.host;
+    const baseUrl = `${protocol}://${host}`;
+
     res.json(videos.map(v => ({
       id: v.id,
       name: v.title.text,
@@ -46,7 +51,7 @@ app.get('/api/search', async (req, res) => {
         total_tracks: 1,
       },
       duration_ms: (v.duration?.seconds || 180) * 1000,
-      preview_url: `http://localhost:3005/api/stream?id=${v.id}`, 
+      preview_url: `${baseUrl}/api/stream?id=${v.id}`, 
       explicit: false,
       popularity: 100,
     })));
@@ -92,6 +97,11 @@ app.get('/api/tracks', async (req, res) => {
     try {
         const search = await yt.search('New Songs Indonesia 2025', { type: 'video' });
         const videos = search.videos.slice(0, 12);
+
+        const protocol = req.headers['x-forwarded-proto'] || 'http';
+        const host = req.headers.host;
+        const baseUrl = `${protocol}://${host}`;
+
         res.json(videos.map(v => ({
             id: v.id,
             name: v.title.text,
@@ -104,7 +114,7 @@ app.get('/api/tracks', async (req, res) => {
                 total_tracks: 1,
             },
             duration_ms: (v.duration?.seconds || 180) * 1000,
-            preview_url: `http://localhost:3005/api/stream?id=${v.id}`,
+            preview_url: `${baseUrl}/api/stream?id=${v.id}`,
             explicit: false,
             popularity: 100,
         })));
@@ -113,6 +123,12 @@ app.get('/api/tracks', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
-  console.log(`🚀 SPOTIFY CLONE V13 STANDBY!`);
-});
+// Export for Vercel
+export default app;
+
+// Only listen if not running as a Vercel function
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, () => {
+    console.log(`🚀 SPOTIFY CLONE V13 STANDBY ON PORT ${port}!`);
+  });
+}

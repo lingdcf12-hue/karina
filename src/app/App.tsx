@@ -37,7 +37,7 @@ export default function App() {
 
   useEffect(() => {
     // Initial fetch to set a default track so player is visible
-    fetch('http://localhost:3005/api/tracks')
+    fetch('/api/tracks')
       .then(res => res.json())
       .then(tracks => {
         if (tracks.length > 0 && !currentTrack) {
