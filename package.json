@@ -6,9 +6,9 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "dev:server": "node --watch server/index.js",
+    "dev:server": "node --watch api/index.js",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:server\"",
-    "vercel-ignore": "git diff --quiet HEAD^ HEAD src/ server/ package.json vercel.json vite.config.ts"
+    "vercel-ignore": "git diff --quiet HEAD^ HEAD src/ api/ package.json vercel.json vite.config.ts"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
