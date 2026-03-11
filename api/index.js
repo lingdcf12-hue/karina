@@ -8,33 +8,41 @@ const port = 3005;
 app.use(cors());
 app.use(express.json());
 
-let yt;
+let ytInstance = null;
 
-// Menyalakan mesin YouTube dengan Mode Penyamaran Android TV (Anti-Blokir)
-async function initYT() {
+// Fungsi pintar untuk mendapatkan atau membuat instance YouTube
+async function getYt() {
+  if (ytInstance) return ytInstance;
+  
   try {
-    yt = await Innertube.create({
+    console.log('⏳ Sedang membangun mesin YouTube...');
+    ytInstance = await Innertube.create({
         cache: new UniversalCache(false),
         generate_session_locally: true
     });
     console.log('✅ DATABASE YOUTUBE SIAP (MODE ANTI-BLOKIR V13)');
+    return ytInstance;
   } catch (e) {
-    console.error("Gagal bangunkan mesin:", e.message);
+    console.error("❌ Gagal bangunkan mesin:", e.message);
+    return null;
   }
 }
 
-initYT();
+// Jalankan inisialisasi di awal untuk mempercepat standby
+getYt();
 
 // 1. ENGINE PENCARIAN
 app.get('/api/search', async (req, res) => {
+  const yt = await getYt();
   if (!yt) return res.status(503).json([]);
+  
   const query = req.query.q || 'Top Hits Indonesia';
   try {
     console.log(`🔍 Mencari Lagu: ${query}`);
     const search = await yt.search(query, { type: 'video' });
     const videos = search.videos.slice(0, 15);
 
-    // Get the base URL from the request host to make it work on Vercel and Local
+    // Pastikan pakai HTTPS di Vercel agar tidak diblokir browser HP
     const protocol = req.headers['x-forwarded-proto'] || 'http';
     const host = req.headers.host;
     const baseUrl = `${protocol}://${host}`;
@@ -56,31 +64,31 @@ app.get('/api/search', async (req, res) => {
       popularity: 100,
     })));
   } catch (error) {
+    console.error("Search Error:", error);
     res.status(500).json([]);
   }
 });
 
 // 2. ENGINE STREAMING PIPI (Sangat Stabil)
 app.get('/api/stream', async (req, res) => {
+  const yt = await getYt();
   if (!yt) return res.status(503).send("Server belum siap");
+  
   const videoId = req.query.id;
   if (!videoId) return res.status(400).send("ID diperlukan");
 
   try {
     console.log(`🎬 Memutar Jalur Pipa: ${videoId}`);
     
-    // Gunakan download stream agar YouTube tidak curiga
     const stream = await yt.download(videoId, {
       type: 'audio',
       quality: 'best',
       format: 'mp4'
     });
 
-    // Pasang label musik murni
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Accept-Ranges', 'bytes');
 
-    // Alirkan datanya!
     for await (const chunk of stream) {
         res.write(chunk);
     }
@@ -93,7 +101,9 @@ app.get('/api/stream', async (req, res) => {
 });
 
 app.get('/api/tracks', async (req, res) => {
+    const yt = await getYt();
     if (!yt) return res.json([]);
+    
     try {
         const search = await yt.search('New Songs Indonesia 2025', { type: 'video' });
         const videos = search.videos.slice(0, 12);
