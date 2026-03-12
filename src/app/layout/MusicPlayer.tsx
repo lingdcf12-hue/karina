@@ -214,34 +214,37 @@ export function MusicPlayer() {
   // We always render the hidden player div so it stays in the DOM and doesn't detach the YouTube instance
   // but we hide the actual UI if there's no track.
   return (
-    <div className={`h-24 bg-black border-t border-[#121212] px-4 items-center justify-between select-none relative z-50 ${currentTrack ? 'flex' : 'hidden'}`}>
+    <div className={`h-[72px] md:h-24 bg-black border-t border-[#121212] px-2 md:px-4 items-center justify-between select-none relative ${currentTrack ? 'flex' : 'hidden'}`}>
       {/* Hidden Player Container - MUST ALWAYS BE PRESENT */}
       <div style={{ position: 'absolute', top: '-1000px', left: '-1000px' }}>
           <div id="youtube-player"></div>
       </div>
       
       {/* HUD Mini */}
-      <div className="absolute -top-6 left-4 text-[9px] text-[#b3b3b3] bg-black/60 px-2 rounded-t flex gap-2">
+      <div className="absolute -top-6 left-4 text-[9px] text-[#b3b3b3] bg-black/60 px-2 rounded-t hidden md:flex gap-2">
           <span>STATUS: <b className={audioState === 'PAUSED' ? 'text-yellow-500' : 'text-green-500'}>{audioState}</b></span>
           {audioError && <span className="text-red-400">| {audioError}</span>}
       </div>
 
       {/* Info Lagu (Kiri) */}
-      <div className="flex items-center gap-4 w-[30%] min-w-0">
-        <img src={currentTrack?.album?.images[0]?.url} alt={currentTrack?.name} className="w-14 h-14 rounded shadow-lg" />
-        <div className="flex flex-col min-w-0">
-          <p className="text-white text-sm font-semibold truncate">{currentTrack?.name}</p>
-          <p className="text-[#b3b3b3] text-[11px] truncate">{currentTrack?.artists?.map((a) => a.name).join(', ')}</p>
+      <div className="flex items-center gap-3 md:gap-4 w-full md:w-[30%] min-w-0">
+        <img src={currentTrack?.album?.images[0]?.url} alt={currentTrack?.name} className="w-12 h-12 md:w-14 md:h-14 rounded shadow-lg" />
+        <div className="flex flex-col min-w-0 flex-1 md:flex-none">
+          <p className="text-white text-xs md:text-sm font-semibold truncate">{currentTrack?.name}</p>
+          <p className="text-[#b3b3b3] text-[10px] md:text-[11px] truncate">{currentTrack?.artists?.map((a) => a.name).join(', ')}</p>
         </div>
-        {currentTrack && (
-          <button onClick={() => toggleLike(currentTrack)} className={`flex-shrink-0 ${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3] hover:text-white'}`}>
-            <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-          </button>
-        )}
+        <div className="flex items-center gap-3 md:hidden">
+            <button onClick={() => toggleLike(currentTrack!)} className={`${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3]'}`}>
+                <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+            </button>
+            <button onClick={handleTogglePlay} className="text-white">
+                {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current" />}
+            </button>
+        </div>
       </div>
 
-      {/* Kontrol (Tengah) */}
-      <div className="flex flex-col items-center max-w-[40%] w-full gap-2">
+      {/* Kontrol (Tengah) - Sembunyikan di mobile */}
+      <div className="hidden md:flex flex-col items-center max-w-[40%] w-full gap-2">
         <div className="flex items-center gap-6">
           <button 
             onClick={toggleShuffle} 
@@ -283,8 +286,8 @@ export function MusicPlayer() {
         </div>
       </div>
 
-      {/* Volume (Kanan) */}
-      <div className="flex items-center justify-end gap-3 w-[30%] min-w-0">
+      {/* Volume (Kanan) - Sembunyikan di mobile */}
+      <div className="hidden md:flex items-center justify-end gap-3 w-[30%] min-w-0">
         <Mic2 className="w-4 h-4 text-[#b3b3b3]" />
         <ListMusic onClick={() => setCurrentView(currentView === 'queue' ? 'home' : 'queue')} className={`w-5 h-5 cursor-pointer ${currentView === 'queue' ? 'text-[#1DB954]' : 'text-[#b3b3b3]'}`} />
         <div className="flex items-center gap-2 group w-[100px]">
@@ -296,6 +299,11 @@ export function MusicPlayer() {
           </div>
         </div>
         <Maximize2 className="w-4 h-4 text-[#b3b3b3]" />
+      </div>
+
+      {/* Progress Bar Mobile */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-white/10 md:hidden overflow-hidden">
+        <div className="h-full bg-white transition-all duration-300" style={{ width: `${progressPercentage}%` }} />
       </div>
     </div>
   );

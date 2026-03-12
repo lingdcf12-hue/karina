@@ -21,10 +21,10 @@ export function TopBar() {
       </div>
 
       {/* Center Navigation & Search */}
-      <div className="flex-1 max-w-[600px] flex items-center gap-2">
+      <div className="flex-1 max-w-[500px] flex items-center gap-2">
         <button 
             onClick={() => setCurrentView('home')}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${currentView === 'home' ? 'bg-[#1f1f1f] text-white' : 'bg-[#1f1f1f] text-[#b3b3b3] hover:text-white'}`}
+            className={`hidden md:flex w-12 h-12 rounded-full items-center justify-center transition-all ${currentView === 'home' ? 'bg-[#1f1f1f] text-white' : 'bg-[#1f1f1f] text-[#b3b3b3] hover:text-white'}`}
         >
           <Home className="w-6 h-6" />
         </button>
@@ -42,14 +42,14 @@ export function TopBar() {
                 if (currentView !== 'search') setCurrentView('search');
             }}
             placeholder="Apa yang ingin kamu dengar?"
-            className="w-full h-12 bg-[#1f1f1f] hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] text-white pl-12 pr-12 rounded-full text-sm border-none focus:ring-2 focus:ring-white transition-all placeholder-[#757575]"
+            className="w-full h-10 md:h-12 bg-[#1f1f1f] hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] text-white pl-10 md:pl-12 pr-10 md:pr-12 rounded-full text-xs md:text-sm border-none focus:ring-2 focus:ring-white transition-all placeholder-[#757575]"
           />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery('')}
-              className="absolute right-12 top-1/2 -translate-y-1/2 text-[#b3b3b3] hover:text-white"
+              className="absolute right-4 md:right-12 top-1/2 -translate-y-1/2 text-[#b3b3b3] hover:text-white"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4 md:w-5 md:h-5" />
             </button>
           )}
           <div className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-[1px] bg-[#333] hidden md:block"></div>

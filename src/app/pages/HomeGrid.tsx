@@ -88,13 +88,13 @@ export function HomeGrid() {
 
       {/* Header with Glassmorphism Effect */}
       <div className="sticky top-0 z-10 bg-[#121212]/30 backdrop-blur-md border-b border-white/5">
-        <div className="px-8 py-4">
-          <h1 className="text-3xl font-bold text-white">{getGreeting()}</h1>
+        <div className="px-4 md:px-8 py-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-white">{getGreeting()}</h1>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="px-8 py-6 relative z-0">
+      <div className="px-4 md:px-8 py-6 relative z-0">
         {/* Recently Played */}
         <section className="mb-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

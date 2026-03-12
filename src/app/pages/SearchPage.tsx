@@ -88,7 +88,7 @@ export function SearchPage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#121212] p-8 pb-32">
+    <div className="flex-1 overflow-y-auto bg-[#121212] p-4 md:p-8 pb-24">
       {/* Search Filters */}
       <div className="flex items-center gap-2 mb-8 overflow-x-auto scrollbar-none">
         <button className="px-3 py-1 bg-white text-black rounded-full text-sm font-medium">Semua</button>

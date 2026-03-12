@@ -4,6 +4,7 @@ import { SearchPage } from "./pages/SearchPage";
 import { MusicPlayer } from "./layout/MusicPlayer";
 import { TopBar } from "./layout/TopBar";
 import { RightSidebar } from "./layout/RightSidebar";
+import { BottomNav } from "./layout/BottomNav";
 import { useMusicStore } from "./store/musicStore";
 
 import { HomeGrid } from "./pages/HomeGrid";
@@ -109,6 +110,9 @@ export default function App() {
 
       {/* Music Player - Fixed Bottom */}
       <MusicPlayer />
+      
+      {/* Mobile Navigation */}
+      <BottomNav />
       <Toaster position="bottom-right" theme="dark" richColors />
       
       {/* Custom Styles Injection */}
