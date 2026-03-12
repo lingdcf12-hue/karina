@@ -93,7 +93,7 @@ export default function App() {
       {/* Main Layout */}
       <div className="flex-1 flex overflow-hidden min-h-0 px-2 gap-2 pb-2">
         {/* Left Sidebar - Collections */}
-        <div className="hidden md:flex h-full flex-shrink-0">
+        <div className="hidden lg:flex w-[240px] flex-shrink-0 h-full">
           <Sidebar />
         </div>
 
@@ -102,8 +102,8 @@ export default function App() {
           {renderContent()}
         </div>
 
-        {/* Right Sidebar - Track Details (Desktop Only) */}
-        <div className="hidden lg:flex h-full flex-shrink-0 bg-[#121212] rounded-lg overflow-hidden">
+        {/* Right Sidebar - Track Details (Always visible to maintain layout) */}
+        <div className="hidden xl:flex w-[300px] flex-shrink-0 h-full">
           <RightSidebar />
         </div>
       </div>

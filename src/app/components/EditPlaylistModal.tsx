@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, X } from 'lucide-react';
 import { useMusicStore } from '../store/musicStore';
 import { 
   Dialog, 
@@ -74,16 +74,20 @@ export function EditPlaylistModal({ isOpen, onClose, playlistId }: { isOpen: boo
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="bg-[#282828] border-none text-white max-w-[524px] p-6 shadow-2xl">
-        <DialogHeader className="flex flex-row items-center justify-between mb-4">
-          <div className="flex flex-col">
-            <DialogTitle className="text-2xl font-bold">Edit detail</DialogTitle>
-            <DialogDescription className="sr-only">
-              Ubah detail playlist seperti nama, deskripsi, dan gambar sampul.
-            </DialogDescription>
-          </div>
-          <button onClick={onClose} className="text-[#b3b3b3] hover:text-white transition-colors">
-            <X className="w-6 h-6" />
-          </button>
+        {/* Aesthetic Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/10 text-white/70 hover:text-white transition-all duration-200 hover:scale-110 hover:shadow-[0_0_12px_rgba(255,255,255,0.2)] group z-10"
+          aria-label="Tutup"
+        >
+          <X className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90" />
+        </button>
+
+        <DialogHeader className="mb-4">
+          <DialogTitle className="text-2xl font-bold">Edit detail</DialogTitle>
+          <DialogDescription className="sr-only">
+            Ubah detail playlist seperti nama, deskripsi, dan gambar sampul.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex gap-4">

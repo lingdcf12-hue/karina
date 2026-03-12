@@ -46,3 +46,31 @@ html {
   background-color: #1DB954;
   color: white;
 }
+
+/* Marquee Animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-ping-pong {
+  0%, 15% { transform: translateX(0); }
+  85%, 100% { transform: translateX(var(--scroll-amount, -50%)); }
+}
+
+.animate-marquee {
+  animation: marquee 12s linear infinite;
+}
+
+.animate-marquee-ping-pong {
+  animation: marquee-ping-pong 8s ease-in-out infinite alternate;
+}
+
+.animate-marquee:hover, .animate-marquee-ping-pong:hover {
+  animation-play-state: paused;
+}
+
+.mask-fade-edges {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
+}

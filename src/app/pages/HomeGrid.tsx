@@ -30,6 +30,7 @@ export function HomeGrid() {
   } = useMusicStore();
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState('Semua');
 
   const playlists = collection.filter(item => item.type === 'Playlist' && item.id !== 'fav');
 
@@ -46,12 +47,7 @@ export function HomeGrid() {
       });
   }, []);
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Selamat pagi";
-    if (hour < 18) return "Selamat siang";
-    return "Selamat malam";
-  };
+  const filters = ['Semua', 'Musik', 'Mengikuti', 'Podcast', 'Live Events'];
 
   const handlePlayTrack = (track: Track) => {
     tracks.forEach((t) => {
@@ -70,10 +66,17 @@ export function HomeGrid() {
     }
   };
 
-  const recentlyPlayed = tracks.slice(0, 6);
+  const recentlyPlayed = tracks.slice(0, 8);
 
   if (loading) {
-    return <div className="flex-1 flex items-center justify-center text-white">Memuat lagu...</div>;
+    return (
+      <div className="flex-1 flex items-center justify-center text-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#1DB954] border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm text-[#b3b3b3]">Memuat lagu...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -82,99 +85,112 @@ export function HomeGrid() {
       <div 
         className="absolute inset-0 pointer-events-none transition-all duration-1000"
         style={{
-            background: `linear-gradient(to bottom, ${dominantColor}55, #121212 40%)`
+          background: `linear-gradient(to bottom, ${dominantColor}66 0%, ${dominantColor}22 30%, #121212 60%)`
         }}
       />
 
-      {/* Header with Glassmorphism Effect */}
-      <div className="sticky top-0 z-10 bg-[#121212]/30 backdrop-blur-md border-b border-white/5">
-        <div className="px-4 md:px-8 py-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-white">{getGreeting()}</h1>
+      {/* Sticky Filter Bar */}
+      <div className="sticky top-0 z-10 bg-[#121212]/90 backdrop-blur-md pb-3 pt-4 px-4 md:px-6">
+        <div className="flex items-center gap-2 flex-wrap">
+          {filters.map(filter => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap ${
+                activeFilter === filter
+                  ? 'bg-white text-black scale-105'
+                  : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="px-4 md:px-8 py-6 relative z-0">
-        {/* Recently Played */}
-        <section className="mb-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentlyPlayed.map((track) => {
-              const isLiked = likedTracks.find(t => t.id === track.id);
-              return (
+      <div className="px-4 md:px-6 relative z-0 mt-4 space-y-10">
+
+        {/* ─── Recently Played Grid ─── */}
+        <section>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {recentlyPlayed.map((track) => (
               <div
                 key={track.id}
-                className="flex items-center gap-4 bg-[#181818]/60 hover:bg-[#282828] rounded transition-all duration-300 overflow-hidden group relative"
+                className="flex items-center bg-white/10 hover:bg-white/20 rounded-md transition-all duration-200 overflow-hidden group cursor-pointer"
+                style={{ height: '64px' }}
+                onClick={() => handlePlayTrack(track)}
               >
-                <button
-                    className="flex flex-1 items-center gap-4 text-left"
-                    onClick={() => handlePlayTrack(track)}
-                >
-                    <img
-                    src={track.album.images[0].url}
-                    alt={track.name}
-                    className="w-20 h-20 object-cover"
-                    />
-                    <div className="flex-1 pr-2 min-w-0">
-                    <p className="text-white font-semibold truncate">
-                        {track.name}
-                    </p>
-                    <p className="text-sm text-[#b3b3b3] truncate">
-                        {track.artists.map((a) => a.name).join(', ')}
-                    </p>
-                    </div>
-                </button>
-                
-                <div className="flex items-center gap-2 pr-4 relative">
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); toggleLike(track); }}
-                        className={`transition-all duration-200 ${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3] opacity-0 group-hover:opacity-100'}`}
-                    >
-                        <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-                    </button>
-                    <div className="w-12 h-12 bg-[#1DB954] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-2xl transform group-hover:translate-y-0 translate-y-2">
-                        <Play className="w-5 h-5 text-black ml-0.5" fill="currentColor" onClick={() => handlePlayTrack(track)} />
-                    </div>
+                {/* Album Art */}
+                <img
+                  src={track.album.images[0].url}
+                  alt={track.name}
+                  className="h-full w-16 flex-shrink-0 object-cover"
+                />
+
+                {/* Track Name */}
+                <div className="flex-1 px-3 min-w-0">
+                  <p className="text-white text-sm font-bold leading-tight line-clamp-2">
+                    {track.name}
+                  </p>
+                </div>
+
+                {/* Play Button */}
+                <div className="pr-3 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div
+                    className="w-9 h-9 bg-[#1DB954] rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+                    onClick={(e) => { e.stopPropagation(); handlePlayTrack(track); }}
+                  >
+                    <Play className="w-4 h-4 text-black ml-0.5" fill="currentColor" />
+                  </div>
                 </div>
               </div>
-              );
-            })}
+            ))}
           </div>
         </section>
 
-        {/* Playlists Section */}
-        <section className="mb-10">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">Dibuat untuk Kamu</h2>
-            <button className="text-sm text-[#b3b3b3] hover:text-white transition-colors font-semibold">
+        {/* ─── Dibuat Untuk (Playlists) ─── */}
+        <section>
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <p className="text-xs font-semibold text-[#b3b3b3] uppercase tracking-widest mb-1">
+                Dibuat Untuk
+              </p>
+              <h2 className="text-2xl font-bold text-white hover:underline cursor-pointer">
+                Yunshan
+              </h2>
+            </div>
+            <button className="text-sm text-[#b3b3b3] hover:text-white transition-colors font-semibold tracking-wide flex-shrink-0">
               Tampilkan semua
             </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {mockPlaylists.map((playlist) => (
               <div
                 key={playlist.id}
-                className="bg-[#181818]/60 p-4 rounded-lg hover:bg-[#282828] transition-all duration-300 cursor-pointer group"
+                className="bg-[#181818] p-3 rounded-lg hover:bg-[#282828] transition-all duration-300 cursor-pointer group flex flex-col"
               >
-                <div className="relative mb-4">
+                {/* Cover Art */}
+                <div className="relative mb-3">
                   <img
                     src={playlist.images[0].url}
                     alt={playlist.name}
-                    className="w-full aspect-square object-cover rounded-lg shadow-xl"
+                    className="w-full aspect-square object-cover rounded-md shadow-lg"
                   />
                   <button
                     onClick={() => handlePlayTrack(playlist.tracks[0])}
-                    className="absolute bottom-2 right-2 w-12 h-12 bg-[#1DB954] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-2xl transform translate-y-2 group-hover:translate-y-0"
+                    className="absolute bottom-2 right-2 w-10 h-10 bg-[#1DB954] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl translate-y-2 group-hover:translate-y-0"
                   >
-                    <Play
-                      className="w-5 h-5 text-black ml-0.5"
-                      fill="currentColor"
-                    />
+                    <Play className="w-4 h-4 text-black ml-0.5" fill="currentColor" />
                   </button>
                 </div>
-                <h3 className="text-white font-semibold mb-2 truncate">
+
+                {/* Info */}
+                <h3 className="text-white text-sm font-semibold mb-1 truncate">
                   {playlist.name}
                 </h3>
-                <p className="text-sm text-[#b3b3b3] line-clamp-2">
+                <p className="text-xs text-[#b3b3b3] line-clamp-2 leading-relaxed flex-1">
                   {playlist.description}
                 </p>
               </div>
@@ -182,62 +198,71 @@ export function HomeGrid() {
           </div>
         </section>
 
-        {/* Popular Tracks */}
-        <section>
-          <div className="flex items-center justify-between mb-6">
+        {/* ─── Lagu Populer ─── */}
+        <section className="pb-4">
+          <div className="flex items-center justify-between mb-5">
             <h2 className="text-2xl font-bold text-white">Lagu Populer</h2>
-            <button className="text-sm text-[#b3b3b3] hover:text-white transition-colors font-semibold">
+            <button className="text-sm text-[#b3b3b3] hover:text-white transition-colors font-semibold flex-shrink-0">
               Tampilkan semua
             </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {tracks.map((track) => {
               const isLiked = likedTracks.find(t => t.id === track.id);
               return (
-              <div
-                key={track.id}
-                className="bg-[#181818]/60 p-4 rounded-lg hover:bg-[#282828] transition-all duration-300 cursor-pointer group"
-              >
-                <div className="relative mb-4">
-                  <img
-                    src={track.album.images[0].url}
-                    alt={track.name}
-                    className="w-full aspect-square object-cover rounded-lg shadow-xl"
-                  />
-                  <button
-                    onClick={() => handlePlayTrack(track)}
-                    className="absolute bottom-2 right-2 w-12 h-12 bg-[#1DB954] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-2xl transform translate-y-2 group-hover:translate-y-0"
-                  >
-                    <Play
-                      className="w-5 h-5 text-black ml-0.5"
-                      fill="currentColor"
+                <div
+                  key={track.id}
+                  className="bg-[#181818] p-3 rounded-lg hover:bg-[#282828] transition-all duration-300 cursor-pointer group flex flex-col"
+                >
+                  {/* Cover Art */}
+                  <div className="relative mb-3">
+                    <img
+                      src={track.album.images[0].url}
+                      alt={track.name}
+                      className="w-full aspect-square object-cover rounded-md shadow-lg"
                     />
-                  </button>
-                </div>
-                <div className="flex items-start justify-between">
+                    <button
+                      onClick={() => handlePlayTrack(track)}
+                      className="absolute bottom-2 right-2 w-10 h-10 bg-[#1DB954] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl translate-y-2 group-hover:translate-y-0"
+                    >
+                      <Play className="w-4 h-4 text-black ml-0.5" fill="currentColor" />
+                    </button>
+                  </div>
+
+                  {/* Info Row */}
+                  <div className="flex items-start justify-between gap-1 flex-1">
                     <div className="min-w-0 flex-1">
-                        <h3 className="text-white font-semibold mb-1 truncate text-sm">
+                      <h3 className="text-white text-sm font-semibold mb-0.5 truncate leading-tight">
                         {track.name}
-                        </h3>
-                        <p className="text-xs text-[#b3b3b3] truncate">
+                      </h3>
+                      <p className="text-xs text-[#b3b3b3] truncate">
                         {track.artists.map((a) => a.name).join(', ')}
-                        </p>
+                      </p>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button 
-                          onClick={(e) => { e.stopPropagation(); toggleLike(track); }}
-                          className={`transition-all duration-200 mt-1 ${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3] hover:text-white'}`}
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-0.5 flex-shrink-0 mt-0.5">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleLike(track); }}
+                        className={`p-1 rounded-full transition-all duration-200 ${
+                          isLiked
+                            ? 'text-[#1DB954]'
+                            : 'text-[#b3b3b3] hover:text-white opacity-0 group-hover:opacity-100'
+                        }`}
+                        title={isLiked ? 'Hapus dari Likes' : 'Suka'}
                       >
-                          <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+                        <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-current' : ''}`} />
                       </button>
-                      
+
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button 
+                          <button
                             onClick={(e) => e.stopPropagation()}
-                            className="text-[#b3b3b3] hover:text-white mt-1"
+                            className="p-1 rounded-full text-[#b3b3b3] hover:text-white opacity-0 group-hover:opacity-100 transition-all duration-200"
+                            title="Opsi lainnya"
                           >
-                            <MoreHorizontal className="w-5 h-5" />
+                            <MoreHorizontal className="w-4 h-4" />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-56 bg-[#282828] border-[#3e3e3e] text-white">
@@ -275,12 +300,13 @@ export function HomeGrid() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
+                  </div>
                 </div>
-              </div>
               );
             })}
           </div>
         </section>
+
       </div>
     </div>
   );

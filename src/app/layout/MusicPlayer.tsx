@@ -19,6 +19,52 @@ import {
 import { useMusicStore } from '../store/musicStore';
 import { formatTime } from '../utils/formatters';
 
+const TickerText = ({ text, className }: { text: string; className: string }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const [scrollAmount, setScrollAmount] = useState('0px');
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (containerRef.current && textRef.current) {
+        // Force wrap-max to measure the real width without truncation interference
+        const originalWidth = textRef.current.style.width;
+        textRef.current.style.width = 'max-content';
+        const overflow = textRef.current.scrollWidth > containerRef.current.clientWidth;
+        setIsOverflowing(overflow);
+        if (overflow) {
+          const amount = containerRef.current.clientWidth - textRef.current.scrollWidth - 12; // extra padding
+          setScrollAmount(`${amount}px`);
+        }
+        textRef.current.style.width = originalWidth;
+      }
+    };
+    
+    checkOverflow();
+    const timer = setTimeout(checkOverflow, 150);
+    window.addEventListener('resize', checkOverflow);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkOverflow);
+    };
+  }, [text]);
+
+  return (
+    <div 
+      ref={containerRef} 
+      className={`overflow-hidden relative w-full min-w-0 ${isOverflowing ? 'mask-fade-edges' : ''}`}
+      style={{ '--scroll-amount': scrollAmount } as React.CSSProperties}
+    >
+      <div className={`flex whitespace-nowrap ${isOverflowing ? 'animate-marquee-ping-pong' : 'min-w-0 w-full'}`}>
+        <span ref={textRef} className={`${className} ${isOverflowing ? 'w-max' : 'truncate block w-full'}`}>
+          {text}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 export function MusicPlayer() {
   const {
     currentTrack,
@@ -214,31 +260,38 @@ export function MusicPlayer() {
   // We always render the hidden player div so it stays in the DOM and doesn't detach the YouTube instance
   // but we hide the actual UI if there's no track.
   return (
-    <div className={`h-[72px] md:h-24 bg-black border-t border-[#121212] px-2 md:px-4 items-center justify-between select-none relative ${currentTrack ? 'flex' : 'hidden'}`}>
+    <div className={`h-[72px] md:h-[90px] bg-black border-t border-[#121212] px-2 md:px-4 items-center justify-between select-none relative ${currentTrack ? 'flex' : 'hidden'}`}>
       {/* Hidden Player Container - MUST ALWAYS BE PRESENT */}
       <div style={{ position: 'absolute', top: '-1000px', left: '-1000px' }}>
           <div id="youtube-player"></div>
       </div>
       
-      {/* HUD Mini */}
-      <div className="absolute -top-6 left-4 text-[9px] text-[#b3b3b3] bg-black/60 px-2 rounded-t hidden md:flex gap-2">
+      {/* HUD Mini - hidden in production */}
+      {false && (
+        <div className="absolute -top-6 left-4 text-[9px] text-[#b3b3b3] bg-black/60 px-2 rounded-t hidden md:flex gap-2">
           <span>STATUS: <b className={audioState === 'PAUSED' ? 'text-yellow-500' : 'text-green-500'}>{audioState}</b></span>
           {audioError && <span className="text-red-400">| {audioError}</span>}
-      </div>
+        </div>
+      )}
 
       {/* Info Lagu (Kiri) */}
-      <div className="flex items-center gap-3 md:gap-4 w-full md:w-[30%] min-w-0">
-        <img src={currentTrack?.album?.images[0]?.url} alt={currentTrack?.name} className="w-12 h-12 md:w-14 md:h-14 rounded shadow-lg" />
-        <div className="flex flex-col min-w-0 flex-1 md:flex-none">
-          <p className="text-white text-xs md:text-sm font-semibold truncate">{currentTrack?.name}</p>
-          <p className="text-[#b3b3b3] text-[10px] md:text-[11px] truncate">{currentTrack?.artists?.map((a) => a.name).join(', ')}</p>
+      <div className="flex items-center gap-3.5 w-full md:w-[30%] min-w-0 pr-2 shrink-0">
+        <img src={currentTrack?.album?.images[0]?.url} alt={currentTrack?.name} className="w-12 h-12 md:w-14 md:h-14 rounded object-cover shadow-lg shrink-0" />
+        <div className="flex flex-col min-w-0 flex-1 overflow-hidden justify-center gap-[1px]">
+          <TickerText text={currentTrack?.name || ''} className="text-white text-[13px] md:text-sm font-medium hover:underline cursor-pointer" />
+          <TickerText text={currentTrack?.artists?.map((a: any) => a.name).join(', ') || ''} className="text-[#b3b3b3] text-[11px] md:text-xs hover:text-white hover:underline cursor-pointer transition-colors" />
         </div>
-        <div className="flex items-center gap-3 md:hidden">
-            <button onClick={() => toggleLike(currentTrack!)} className={`${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3]'}`}>
-                <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+        <div className="hidden md:flex items-center gap-4 shrink-0 px-2">
+            <button onClick={() => toggleLike(currentTrack!)} className={`${isLiked ? 'text-[#1DB954] hover:scale-105' : 'text-[#b3b3b3] hover:text-white'} transition-all`}>
+                {isLiked ? <CheckCircle2 className="w-5 h-5 fill-current" /> : <Heart className="w-5 h-5" />}
             </button>
-            <button onClick={handleTogglePlay} className="text-white">
-                {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current" />}
+        </div>
+        <div className="flex items-center gap-3 md:hidden shrink-0">
+            <button onClick={() => toggleLike(currentTrack!)} className={`${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3]'}`}>
+                {isLiked ? <CheckCircle2 className="w-6 h-6 fill-current" /> : <Heart className="w-6 h-6" />}
+            </button>
+            <button onClick={handleTogglePlay} className="text-white shrink-0">
+                {isPlaying ? <Pause className="w-7 h-7 fill-current" /> : <Play className="w-7 h-7 fill-current" />}
             </button>
         </div>
       </div>
