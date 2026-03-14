@@ -98,179 +98,97 @@ export function MusicPlayer() {
   const [previousVolume, setPreviousVolume] = useState(volume);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [audioState, setAudioState] = useState('IDLE');
-  const [player, setPlayer] = useState<any>(null);
-  const [isReady, setIsReady] = useState(false);
-  const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
-  const silentVideoRef = useRef<HTMLVideoElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Hack: Putar VIDEO transparan/kosong (bukan cuma audio) agar browser tidak menyetop media.
-  // Video mendapat prioritas jauh lebih tinggi di background/lockscreen (khusus iOS/Android Chrome/Safari).
+  // 1. Inisialisasi Audio Element & Event Listeners
   useEffect(() => {
-    if (!silentVideoRef.current) {
-      const video = document.createElement('video');
-      // 1x1 black silent mp4 base64 (sangat kecil)
-      video.src = "data:video/mp4;base64,AAAAHGZ0eXBpc29tAAACAGlzb21pc28yYXZjMQAAAAhmcmVlAAAGsW1kYXQAAAKqBgX//5x/ex//+EIfBQAAPwAAAQAAABAQEBAQEBAQEBAQEBAwEBAQEBAQEBAQMBAQEBAQEBAQEBAQADAwEBAQEBAQEBAQADAwEBAQEBAQEBAQEBAQAAAAgH/gMvAAAAAAQQAQ0BBAgP/gFNAAAAAAQQAQ0BBAiA/sENAAAAAAQQAQ0BBBAAAAAAAgIAAED/+Bf/72P/4F//vY//gX/++H/+Bf/72P/4F//vY//gAADAwAAzAAAL21vb3YAAABsbXZoZAAAAADR1YpI0dWKSJAAAAABAAAC7wABAAQAAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAGGlvZHMAAAAAEID/AAEAAQACAQAAAHB0cmFrAAAAXHRraGQAAAAD0dWKSNHVikgAAAABAAAAAAAC7wAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAYEbWRpYQAAACBtZGhkAAAAANHVikjR1YpIFQAAAAAAAu8AAAAAAAAAIMWhZGxyAAAAAAAAAAB2aWRlAAAAAAAAAAAAAAAAVmlkZW9IYW5kbGVyAAAABTBtaW5mAAAAFHZtaGQAAAABAAAAAAAAAAAAAAAkZGluZgAAABxkcmVmAAAAAAAAAAEAAAAMdXJsIAAAAAEAAAQpc3RibAAAALhzdHNkAAAAAAAAAAEAAACoYXZjMQAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAABAABAAEgAAABIAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY//8AAAAxYXZjQwH0AAr/4QAaZ/QACqywEwgIUAAxIswCAAADAAIAAAMAg8x8QgAEZmmDAAAADHN0dHMAAAAAAAAAAQAAAAEAAAMiAAAAFHN0c3MAAAAAAAAAAQAAAAEAAAAUc3RzYwAAAAAAAAABAAAAAQAAAAEAAAABAAAAKHN0c3oAAAAAAAAAAAAAAAEAAAKqAAAAFHN0Y28AAAAAAAAAAQAAADAAAAAwdWR0YQAAAChtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAA";
-      video.loop = true;
-      video.playsInline = true; 
-      video.muted = false; 
-      video.setAttribute('playsinline', 'true');
-      video.setAttribute('webkit-playsinline', 'true');
-      silentVideoRef.current = video;
-
-      const unlockAudio = () => {
-        if (silentVideoRef.current) {
-          silentVideoRef.current.play().then(() => {
-            if (!useMusicStore.getState().isPlaying) {
-              silentVideoRef.current?.pause();
-            }
-          }).catch(() => {});
-        }
-        document.removeEventListener('click', unlockAudio);
-        document.removeEventListener('touchstart', unlockAudio);
-      };
-
-      document.addEventListener('click', unlockAudio);
-      document.addEventListener('touchstart', unlockAudio);
-      
-      return () => {
-        document.removeEventListener('click', unlockAudio);
-        document.removeEventListener('touchstart', unlockAudio);
-        if (silentVideoRef.current) {
-           silentVideoRef.current.pause();
-        }
-      };
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.preload = "auto";
     }
+    // Set proper volume range (0 to 1)
+    audioRef.current.volume = isMuted ? 0 : volume / 100;
   }, []);
 
+  // 2. Load Track
   useEffect(() => {
-    if (silentVideoRef.current) {
-      if (isPlaying) {
-        silentVideoRef.current.play().catch(() => {});
-      } else {
-        silentVideoRef.current.pause();
-      }
-    }
-  }, [isPlaying]);
-
-  // 1. Inisialisasi API YouTube
-  useEffect(() => {
-    if (!(window as any).YT) {
-      const tag = document.createElement('script');
-      tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
-    }
-
-    (window as any).onYouTubeIframeAPIReady = () => {
-      console.log("YouTube API Ready");
-      setIsReady(true);
-    };
-
-    if ((window as any).YT && (window as any).YT.Player) {
-      setIsReady(true);
-    }
-  }, []);
-
-  // 2. Buat atau Update Player
-  useEffect(() => {
-    if (!currentTrack || !isReady) return;
-
-    if (!player) {
-      const newPlayer = new (window as any).YT.Player('youtube-player', {
-        height: '1',
-        width: '1',
-        videoId: currentTrack.id,
-        playerVars: {
-          'autoplay': 1,
-          'controls': 0,
-          'disablekb': 1,
-          'fs': 0,
-          'rel': 0,
-          'origin': window.location.origin, // Kunci kestabilan
-          'widget_referrer': window.location.origin
-        },
-        events: {
-          'onReady': (event: any) => {
-            setPlayer(event.target);
-            setIsPlayerReady(true);
-            setAudioState('READY');
-            event.target.setVolume(volume);
-            if (isPlaying) event.target.playVideo();
-          },
-          'onStateChange': (event: any) => {
-            if (event.data === (window as any).YT.PlayerState.PLAYING) {
-                setAudioState('PLAYING');
-                setDuration(event.target.getDuration());
-            }
-            if (event.data === 2) setAudioState('PAUSED');
-            if (event.data === 3) setAudioState('LOADING');
-            if (event.data === 0) nextTrack(); // AUTO NEXT
-          },
-          'onError': (e: any) => {
-              console.error("YT Player Error:", e.data);
-              setAudioError("Gagal putar lagu ini. Mencoba lagu lain...");
-              setTimeout(() => nextTrack(), 2000);
-          }
-        }
-      });
-    } else if (isPlayerReady) {
+    if (!currentTrack || !audioRef.current) return;
+    
+    // API backend stream url
+    const trackUrl = currentTrack.preview_url || `/api/stream?id=${currentTrack.id}`;
+    
+    if (audioRef.current.src !== trackUrl && !audioRef.current.src.includes(currentTrack.id)) {
       setAudioState('LOADING');
-      player.loadVideoById(currentTrack.id);
+      audioRef.current.src = trackUrl;
+      audioRef.current.load();
     }
-  }, [currentTrack?.id, isReady, isPlayerReady]);
+  }, [currentTrack]);
 
-  // Cleanup player on unmount
+  // 3. Audio Handlers
   useEffect(() => {
-    return () => {
-      if (player && typeof player.destroy === 'function') {
-        try {
-          player.destroy();
-        } catch (e) {
-          console.error("Error destroying player:", e);
-        }
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleTimeUpdate = () => setProgress(audio.currentTime);
+    const handleLoadedMetadata = () => {
+      setAudioState('READY');
+      // If duration is valid, set it (otherwise rely on store duration)
+      if (audio.duration && isFinite(audio.duration)) {
+        setDuration(audio.duration);
       }
+      if (isPlaying) audio.play().catch(() => {});
     };
-  }, [player]);
+    const handleEnded = () => nextTrack();
+    const handlePlay = () => setAudioState('PLAYING');
+    const handlePause = () => setAudioState('PAUSED');
+    const handleWaiting = () => setAudioState('LOADING');
+    const handleError = (e: Event) => {
+      console.error("Audio Error:", e);
+      setAudioError("Gagal streaming lagu. Mencoba berikutnya...");
+      setTimeout(() => nextTrack(), 2500);
+    };
+
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('waiting', handleWaiting);
+    audio.addEventListener('error', handleError);
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('waiting', handleWaiting);
+      audio.removeEventListener('error', handleError);
+    };
+  }, [currentTrack]);
 
   // Sync Play/Pause
   useEffect(() => {
-    if (!player || !isPlayerReady) return;
-    try {
-        if (isPlaying) player.playVideo();
-        else player.pauseVideo();
-    } catch (e) {
-        console.warn("Player call failed (detached?):", e);
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.play().catch((e) => console.log("Auto-play delayed by browser", e));
+    } else {
+      audioRef.current.pause();
     }
-  }, [isPlaying, player, isPlayerReady]);
+  }, [isPlaying]);
 
   // Sync Volume
   useEffect(() => {
-    if (player && isPlayerReady) {
-        try {
-            player.setVolume(isMuted ? 0 : volume);
-        } catch (e) {}
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : Math.max(0, Math.min(1, volume / 100));
     }
-  }, [volume, isMuted, player, isPlayerReady]);
+  }, [volume, isMuted]);
 
-  // Progress Update
-  useEffect(() => {
-    if (!player || !isPlayerReady) return;
-    const interval = setInterval(() => {
-        try {
-            if (player.getPlayerState() === (window as any).YT.PlayerState.PLAYING) {
-                setProgress(player.getCurrentTime());
-            }
-        } catch (e) {}
-    }, 100); // Dipercepat dari 500ms ke 100ms untuk menghilangkan delay UI
-    return () => clearInterval(interval);
-  }, [player, isPlayerReady]);
-
-  // 3. Media Session API untuk Kontrol Luar Web (Mobile/Lockscreen)
+  // Setup Media Session API (Natively supported by standard Audio)
   useEffect(() => {
     if (!('mediaSession' in navigator) || !currentTrack) return;
 
-    // Update Metadata (Gambar, Judul, Artist)
     navigator.mediaSession.metadata = new MediaMetadata({
       title: currentTrack.name,
       artist: currentTrack.artists?.map((a: any) => a.name).join(', '),
@@ -282,16 +200,15 @@ export function MusicPlayer() {
       ]
     });
 
-    // Action Handlers
     const handlers = [
-        ['play', () => { handleTogglePlay(); }],
-        ['pause', () => { handleTogglePlay(); }],
-        ['previoustrack', () => { handlePrevious(); }],
-        ['nexttrack', () => { handleNext(); }],
-        ['stop', () => { pause(); }],
+        ['play', () => handleTogglePlay()],
+        ['pause', () => handleTogglePlay()],
+        ['previoustrack', () => handlePrevious()],
+        ['nexttrack', () => handleNext()],
+        ['stop', () => pause()],
         ['seekto', (details: any) => { 
-            if (details.seekTime !== undefined && player) {
-                player.seekTo(details.seekTime, true);
+            if (details.seekTime !== undefined && audioRef.current) {
+                audioRef.current.currentTime = details.seekTime;
                 setProgress(details.seekTime);
             }
         }]
@@ -300,19 +217,16 @@ export function MusicPlayer() {
     for (const [action, handler] of handlers) {
         try {
             navigator.mediaSession.setActionHandler(action as any, handler as any);
-        } catch (error) {
-            console.error(`Gagal set action handler ${action}:`, error);
-        }
+        } catch (error) {}
     }
 
     return () => {
         for (const [action] of handlers) {
-            navigator.mediaSession.setActionHandler(action as any, null);
+            try { navigator.mediaSession.setActionHandler(action as any, null); } catch(e) {}
         }
     };
-  }, [currentTrack, player, isPlayerReady, isPlaying]);
+  }, [currentTrack, isPlaying]);
 
-  // 4. Update Playback State & Position (Lockscreen Sync)
   useEffect(() => {
     if ('mediaSession' in navigator) {
       navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
@@ -320,12 +234,12 @@ export function MusicPlayer() {
   }, [isPlaying]);
 
   useEffect(() => {
-    if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession && duration > 0) {
+    if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession && duration > 0 && isFinite(progress)) {
       try {
         navigator.mediaSession.setPositionState({
-          duration: duration,
+          duration: Math.max(0, duration),
           playbackRate: 1,
-          position: Math.min(progress, duration)
+          position: Math.max(0, Math.min(progress, duration))
         });
       } catch (e) {}
     }
@@ -342,13 +256,15 @@ export function MusicPlayer() {
     if (isMuted) { setVolume(previousVolume); setIsMuted(false); }
     else { setPreviousVolume(volume); setVolume(0); setIsMuted(true); }
   };
+  
   const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newProgress = parseFloat(e.target.value);
-    if (player && isFinite(newProgress)) {
-        player.seekTo(newProgress, true);
+    if (audioRef.current && isFinite(newProgress)) {
+        audioRef.current.currentTime = newProgress;
         setProgress(newProgress);
     }
   };
+  
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
@@ -365,13 +281,17 @@ export function MusicPlayer() {
         case 'n': handleNext(); break;
         case 'p': handlePrevious(); break;
         case 'm': handleVolumeToggle(); break;
-        case 'arrowright': if (player) player.seekTo(progress + 5, true); break;
-        case 'arrowleft': if (player) player.seekTo(Math.max(0, progress - 5), true); break;
+        case 'arrowright': 
+          if (audioRef.current) audioRef.current.currentTime = progress + 5; 
+          break;
+        case 'arrowleft': 
+          if (audioRef.current) audioRef.current.currentTime = Math.max(0, progress - 5); 
+          break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentTrack, player, progress]);
+  }, [currentTrack, progress]);
 
   const isLiked = currentTrack ? likedTracks.find(t => t.id === currentTrack.id) : null;
   const progressPercentage = (progress / (duration || 1)) * 100;
@@ -399,14 +319,10 @@ export function MusicPlayer() {
         if (window.innerWidth < 768) setIsFullScreenOpen(true);
       }}
     >
-      {/* Hidden Player Container - MUST ALWAYS BE PRESENT */}
-      <div style={{ position: 'absolute', top: '-1000px', left: '-1000px' }}>
-          <div id="youtube-player"></div>
-      </div>
-      
       {/* HUD Mini - hidden in production */}
       {false && (
         <div className="absolute -top-6 left-4 text-[9px] text-[#b3b3b3] bg-black/60 px-2 rounded-t hidden md:flex gap-2">
+
           <span>STATUS: <b className={audioState === 'PAUSED' ? 'text-yellow-500' : 'text-green-500'}>{audioState}</b></span>
           {audioError && <span className="text-red-400">| {audioError}</span>}
         </div>
