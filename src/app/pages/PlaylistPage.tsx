@@ -153,8 +153,8 @@ export function PlaylistPage() {
       {/* ── Track Table ── */}
       <div className="px-4 md:px-6 pb-8">
         {/* Table Header */}
-        <div className="grid gap-4 px-4 py-2 border-b border-white/10 mb-1"
-          style={{ gridTemplateColumns: '32px 1fr 1fr 80px 48px' }}
+        <div className="gap-4 px-4 py-2 border-b border-white/10 mb-1 md:grid hidden"
+          style={{ gridTemplateColumns: '16px 1fr 1fr 80px 48px' }}
         >
           <span className="text-[#b3b3b3] text-xs font-medium uppercase tracking-wider text-center">#</span>
           <span className="text-[#b3b3b3] text-xs font-medium uppercase tracking-wider">Judul</span>
@@ -163,6 +163,12 @@ export function PlaylistPage() {
             <Clock3 className="w-4 h-4 text-[#b3b3b3]" />
           </div>
           <span />
+        </div>
+
+        {/* Mobile Header Surrogate */}
+        <div className="md:hidden flex items-center justify-between px-4 py-2 border-b border-white/10 mb-2">
+           <span className="text-[#b3b3b3] text-xs font-medium uppercase tracking-wider">Lagu</span>
+           <Clock3 className="w-4 h-4 text-[#b3b3b3]" />
         </div>
 
         {/* Empty State */}
@@ -180,11 +186,10 @@ export function PlaylistPage() {
                 <div
                   key={track.id}
                   onClick={() => handleTrackClick(track)}
-                  className="grid gap-4 px-4 py-2.5 rounded-md hover:bg-white/10 group transition-colors cursor-pointer items-center"
-                  style={{ gridTemplateColumns: '32px 1fr 1fr 80px 48px' }}
+                  className="grid gap-2 md:gap-4 px-2 md:px-4 py-2 rounded-md hover:bg-white/10 group transition-colors cursor-pointer items-center grid-cols-[auto_1fr_auto] md:grid-cols-[32px_1fr_1fr_80px_48px]"
                 >
-                  {/* Index / Play Icon */}
-                  <div className="flex items-center justify-center">
+                  {/* Index / Play Icon - Hidden on mobile */}
+                  <div className="hidden md:flex items-center justify-center">
                     <span className="text-[#b3b3b3] text-sm group-hover:hidden">{index + 1}</span>
                     <Play className="w-4 h-4 text-white fill-current hidden group-hover:block" />
                   </div>

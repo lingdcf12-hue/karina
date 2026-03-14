@@ -18,14 +18,15 @@ export function BottomNav() {
         const isActive = 
           (item.id === 'home' && (currentView === 'home' || currentView === 'playlist')) ||
           (item.id === 'search' && currentView === 'search') ||
-          (item.id === 'library' && currentView === 'liked-songs');
+          (item.id === 'library' && (currentView === 'library' || currentView === 'liked-songs'));
 
         return (
           <button
             key={item.id}
             onClick={() => {
-                if (item.id === 'library') setCurrentView('liked-songs');
-                else if (item.id === 'profile') setCurrentView('login');
+                if (item.id === 'profile') {
+                    if (!useMusicStore.getState().user) setCurrentView('login');
+                }
                 else setCurrentView(item.id as any);
             }}
             className={`flex flex-col items-center gap-1 transition-all duration-300 ${isActive ? 'text-white' : 'text-[#b3b3b3] hover:text-white'}`}

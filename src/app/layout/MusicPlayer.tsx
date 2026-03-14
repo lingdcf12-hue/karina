@@ -260,7 +260,20 @@ export function MusicPlayer() {
   // We always render the hidden player div so it stays in the DOM and doesn't detach the YouTube instance
   // but we hide the actual UI if there's no track.
   return (
-    <div className={`h-[72px] md:h-[90px] bg-black border-t border-[#121212] px-2 md:px-4 items-center justify-between select-none relative ${currentTrack ? 'flex' : 'hidden'}`}>
+    <div className={`
+      ${currentTrack ? 'flex' : 'hidden'}
+      flex-col md:flex-row
+      bg-black md:bg-black
+      border-t border-[#121212] md:border-t
+      p-2 md:px-4 md:h-[90px]
+      items-center justify-between select-none relative
+      transition-all duration-300
+      ${currentTrack ? 'translate-y-0' : 'translate-y-full'}
+      md:static fixed bottom-[64px] left-2 right-2 md:bottom-auto md:left-auto md:right-auto
+      rounded-lg md:rounded-none
+      bg-[#1a1a1a] md:bg-black
+      z-[40] md:z-auto
+    `}>
       {/* Hidden Player Container - MUST ALWAYS BE PRESENT */}
       <div style={{ position: 'absolute', top: '-1000px', left: '-1000px' }}>
           <div id="youtube-player"></div>
@@ -275,23 +288,35 @@ export function MusicPlayer() {
       )}
 
       {/* Info Lagu (Kiri) */}
-      <div className="flex items-center gap-3.5 w-full md:w-[30%] min-w-0 pr-2 shrink-0">
-        <img src={currentTrack?.album?.images[0]?.url} alt={currentTrack?.name} className="w-12 h-12 md:w-14 md:h-14 rounded object-cover shadow-lg shrink-0" />
+      <div className="flex items-center gap-3 w-full md:w-[30%] min-w-0 md:pr-2">
+        <img src={currentTrack?.album?.images[0]?.url} alt={currentTrack?.name} className="w-10 h-10 md:w-14 md:h-14 rounded object-cover shadow-lg shrink-0" />
         <div className="flex flex-col min-w-0 flex-1 overflow-hidden justify-center gap-[1px]">
           <TickerText text={currentTrack?.name || ''} className="text-white text-[13px] md:text-sm font-medium hover:underline cursor-pointer" />
-          <TickerText text={currentTrack?.artists?.map((a: any) => a.name).join(', ') || ''} className="text-[#b3b3b3] text-[11px] md:text-xs hover:text-white hover:underline cursor-pointer transition-colors" />
+          <div className="flex items-center gap-1.5 min-w-0">
+             <span className="md:hidden w-3 h-3 text-[#1DB954] shrink-0">
+                <svg viewBox="0 0 24 24" className="fill-current"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+             </span>
+             <TickerText text={currentTrack?.artists?.map((a: any) => a.name).join(', ') || ''} className="text-[#b3b3b3] text-[11px] md:text-xs hover:text-white hover:underline cursor-pointer transition-colors" />
+          </div>
         </div>
-        <div className="hidden md:flex items-center gap-4 shrink-0 px-2">
-            <button onClick={() => toggleLike(currentTrack!)} className={`${isLiked ? 'text-[#1DB954] hover:scale-105' : 'text-[#b3b3b3] hover:text-white'} transition-all`}>
-                {isLiked ? <CheckCircle2 className="w-5 h-5 fill-current" /> : <Heart className="w-5 h-5" />}
+        
+        {/* Mobile controls inside info area */}
+        <div className="flex items-center gap-2 md:hidden shrink-0 ml-auto bg-[#1a1a1a] pl-2">
+            <button className="text-[#b3b3b3] hover:text-[#1DB954] transition-colors p-1">
+               <Laptop2 className="w-5 h-5" />
             </button>
-        </div>
-        <div className="flex items-center gap-3 md:hidden shrink-0">
-            <button onClick={() => toggleLike(currentTrack!)} className={`${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3]'}`}>
+            <button onClick={() => toggleLike(currentTrack!)} className={`${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3]'} p-1`}>
                 {isLiked ? <CheckCircle2 className="w-6 h-6 fill-current" /> : <Heart className="w-6 h-6" />}
             </button>
-            <button onClick={handleTogglePlay} className="text-white shrink-0">
+            <button onClick={handleTogglePlay} className="text-white p-1">
                 {isPlaying ? <Pause className="w-7 h-7 fill-current" /> : <Play className="w-7 h-7 fill-current" />}
+            </button>
+        </div>
+        
+        {/* Desktop Like Button */}
+        <div className="hidden md:flex items-center gap-4 shrink-0 px-2 ml-auto">
+            <button onClick={() => toggleLike(currentTrack!)} className={`${isLiked ? 'text-[#1DB954] hover:scale-105' : 'text-[#b3b3b3] hover:text-white'} transition-all`}>
+                {isLiked ? <CheckCircle2 className="w-5 h-5 fill-current" /> : <Heart className="w-5 h-5" />}
             </button>
         </div>
       </div>
@@ -354,9 +379,9 @@ export function MusicPlayer() {
         <Maximize2 className="w-4 h-4 text-[#b3b3b3]" />
       </div>
 
-      {/* Progress Bar Mobile */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-white/10 md:hidden overflow-hidden">
-        <div className="h-full bg-white transition-all duration-300" style={{ width: `${progressPercentage}%` }} />
+      {/* Progress Bar Mobile - inside the floating bar bottom */}
+      <div className="absolute bottom-0 left-2 right-2 h-[3px] bg-white/10 md:hidden overflow-hidden rounded-full mb-[2px]">
+        <div className="h-full bg-white transition-all duration-300 rounded-full" style={{ width: `${progressPercentage}%` }} />
       </div>
     </div>
   );

@@ -43,14 +43,14 @@ export function LikedSongsPage() {
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-b from-[#450af5] to-[#121212] flex flex-col">
       {/* Header */}
-      <div className="p-8 pb-6 flex items-end gap-6 mt-12 bg-black/20">
-        <div className="w-52 h-52 bg-gradient-to-br from-[#450af5] to-[#c4efd9] shadow-2xl flex items-center justify-center rounded">
-          <Heart className="w-24 h-24 text-white fill-current" />
+      <div className="p-4 md:p-8 pb-6 flex flex-col md:flex-row items-center md:items-end gap-6 mt-8 md:mt-12 bg-black/20 text-center md:text-left">
+        <div className="w-40 h-40 md:w-52 md:h-52 bg-gradient-to-br from-[#450af5] to-[#c4efd9] shadow-2xl flex items-center justify-center rounded">
+          <Heart className="w-20 h-20 md:w-24 md:h-24 text-white fill-current" />
         </div>
         <div className="flex flex-col gap-2">
             <span className="text-white text-xs font-bold uppercase tracking-wider">Playlist</span>
-            <h1 className="text-8xl font-black text-white">Lagu yang Disukai</h1>
-            <div className="flex items-center gap-2 mt-4">
+            <h1 className="text-4xl md:text-8xl font-black text-white leading-tight">Lagu yang Disukai</h1>
+            <div className="flex items-center justify-center md:justify-start gap-2 mt-4">
                 <div className="w-6 h-6 rounded-full bg-[#3d3d3d] flex items-center justify-center overflow-hidden">
                     <span className="text-[10px] text-white">B</span>
                 </div>
@@ -74,11 +74,12 @@ export function LikedSongsPage() {
         </div>
 
         {/* Table Header */}
-        <div className="grid grid-cols-[16px_4fr_3fr_minmax(120px,1fr)] gap-4 px-4 py-2 border-b border-white/10 text-[#b3b3b3] text-xs font-medium uppercase tracking-wider mb-4">
-            <span>#</span>
+        <div className="grid grid-cols-[16px_1fr_minmax(120px,auto)] md:grid-cols-[16px_4fr_3fr_minmax(120px,1fr)] gap-4 px-4 py-2 border-b border-white/10 text-[#b3b3b3] text-xs font-medium uppercase tracking-wider mb-4">
+            <span className="hidden md:block">#</span>
+            <div className="md:hidden flex items-center justify-center"><Heart className="w-4 h-4" /></div>
             <span>Judul</span>
-            <span>Album</span>
-            <div className="flex justify-end pr-8">
+            <span className="hidden md:block">Album</span>
+            <div className="flex justify-end pr-4 md:pr-8">
                 <Clock3 className="w-4 h-4" />
             </div>
         </div>
@@ -96,20 +97,20 @@ export function LikedSongsPage() {
                     <div 
                         key={track.id}
                         onClick={() => handleTrackClick(track)}
-                        className="grid grid-cols-[16px_4fr_3fr_minmax(120px,1fr)] gap-4 px-4 py-2 rounded-md hover:bg-white/10 group transition-colors cursor-pointer items-center"
+                        className="grid grid-cols-[16px_1fr_minmax(120px,auto)] md:grid-cols-[16px_4fr_3fr_minmax(120px,1fr)] gap-4 px-4 py-2 rounded-md hover:bg-white/10 group transition-colors cursor-pointer items-center"
                     >
-                        <span className="text-[#b3b3b3] text-sm group-hover:hidden">{index + 1}</span>
+                        <span className="text-[#b3b3b3] text-sm group-hover:hidden hidden md:block">{index + 1}</span>
                         <Play className="w-3.5 h-3.5 text-white fill-current hidden group-hover:block" />
                         
-                        <div className="flex items-center gap-3">
-                            <img src={track.album.images[0].url} alt={track.name} className="w-10 h-10 rounded object-cover" />
-                            <div className="flex flex-col">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <img src={track.album.images[0].url} alt={track.name} className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                            <div className="flex flex-col min-w-0">
                                 <span className="text-white font-medium truncate">{track.name}</span>
-                                <span className="text-xs text-[#b3b3b3] group-hover:text-white">{track.artists.map(a => a.name).join(', ')}</span>
+                                <span className="text-xs text-[#b3b3b3] group-hover:text-white truncate">{track.artists.map(a => a.name).join(', ')}</span>
                             </div>
                         </div>
 
-                        <span className="text-sm text-[#b3b3b3] group-hover:text-white truncate">{track.album.name}</span>
+                        <span className="text-sm text-[#b3b3b3] group-hover:text-white truncate hidden md:block">{track.album.name}</span>
 
                         <div className="flex items-center justify-end gap-4 pr-4 relative">
                             <button 
