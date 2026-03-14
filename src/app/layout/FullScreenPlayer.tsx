@@ -86,7 +86,7 @@ export function FullScreenPlayer({ isOpen, onClose }: FullScreenPlayerProps) {
 
   return (
     <div 
-      className="fixed inset-0 z-[100] text-white flex flex-col overflow-hidden select-none animate-in slide-in-from-bottom duration-500 ease-out"
+      className="fixed inset-0 z-[9999] text-white flex flex-col overflow-hidden select-none animate-in slide-in-from-bottom duration-500 ease-out"
       style={{
         background: `linear-gradient(to bottom, ${bgColor} 0%, #121212 100%)`
       }}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Play,
   Pause,
@@ -263,6 +264,7 @@ export function MusicPlayer() {
   // We always render the hidden player div so it stays in the DOM and doesn't detach the YouTube instance
   // but we hide the actual UI if there's no track.
   return (
+    <>
     <div 
       className={`
         ${currentTrack ? 'flex' : 'hidden'}
@@ -392,11 +394,16 @@ export function MusicPlayer() {
       <div className="absolute bottom-0 left-2 right-2 h-[3px] bg-white/10 md:hidden overflow-hidden rounded-full mb-[2px]">
         <div className="h-full bg-white transition-all duration-300 rounded-full" style={{ width: `${progressPercentage}%` }} />
       </div>
+    </div>
 
+    {/* Portal: render FullScreenPlayer at document.body level so it covers EVERYTHING */}
+    {createPortal(
       <FullScreenPlayer 
         isOpen={isFullScreenOpen}
         onClose={() => setIsFullScreenOpen(false)}
-      />
-    </div>
+      />,
+      document.body
+    )}
+    </>
   );
 }
