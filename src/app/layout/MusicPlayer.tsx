@@ -105,12 +105,32 @@ export function MusicPlayer() {
   const silentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Hack: Putar audio native kosong agar browser tidak menyetop tab ini di background
+  // Harus menggunakan polanya "unlock on first user interaction" agar diizinkan oleh mobile browser
   useEffect(() => {
     if (!silentAudioRef.current) {
-      // 1-sample silent WAV base64
       const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
       audio.loop = true;
       silentAudioRef.current = audio;
+
+      const unlockAudio = () => {
+        if (silentAudioRef.current) {
+          silentAudioRef.current.play().then(() => {
+            if (!useMusicStore.getState().isPlaying) {
+              silentAudioRef.current?.pause();
+            }
+          }).catch(() => {});
+        }
+        document.removeEventListener('click', unlockAudio);
+        document.removeEventListener('touchstart', unlockAudio);
+      };
+
+      document.addEventListener('click', unlockAudio);
+      document.addEventListener('touchstart', unlockAudio);
+      
+      return () => {
+        document.removeEventListener('click', unlockAudio);
+        document.removeEventListener('touchstart', unlockAudio);
+      };
     }
   }, []);
 
