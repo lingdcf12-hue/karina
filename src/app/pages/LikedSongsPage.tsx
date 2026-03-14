@@ -126,7 +126,7 @@ export function LikedSongsPage() {
                                     <DropdownMenuTrigger asChild>
                                         <button 
                                             onClick={(e) => e.stopPropagation()}
-                                            className="text-[#b3b3b3] hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="text-[#b3b3b3] hover:text-white md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1"
                                         >
                                             <MoreHorizontal className="w-5 h-5" />
                                         </button>

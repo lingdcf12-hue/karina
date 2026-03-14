@@ -304,8 +304,8 @@ export function MusicPlayer() {
             <button className="text-[#b3b3b3] hover:text-[#1DB954] transition-colors p-1">
                <Laptop2 className="w-5 h-5" />
             </button>
-            <button onClick={() => toggleLike(currentTrack!)} className={`${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3]'} p-1`}>
-                {isLiked ? <CheckCircle2 className="w-6 h-6 fill-current" /> : <Heart className="w-6 h-6" />}
+            <button onClick={() => toggleLike(currentTrack!)} className={`${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3]'} p-1 transition-all`}>
+                <Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />
             </button>
             <button onClick={handleTogglePlay} className="text-white p-1">
                 {isPlaying ? <Pause className="w-7 h-7 fill-current" /> : <Play className="w-7 h-7 fill-current" />}
@@ -314,8 +314,8 @@ export function MusicPlayer() {
         
         {/* Desktop Like Button */}
         <div className="hidden md:flex items-center gap-4 shrink-0 px-2 ml-auto">
-            <button onClick={() => toggleLike(currentTrack!)} className={`${isLiked ? 'text-[#1DB954] hover:scale-105' : 'text-[#b3b3b3] hover:text-white'} transition-all`}>
-                {isLiked ? <CheckCircle2 className="w-5 h-5 fill-current" /> : <Heart className="w-5 h-5" />}
+            <button onClick={() => toggleLike(currentTrack!)} className={`${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3]'} transition-all`}>
+                <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
             </button>
         </div>
       </div>

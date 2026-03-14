@@ -248,7 +248,7 @@ export function HomeGrid() {
                         className={`p-1 rounded-full transition-all duration-200 ${
                           isLiked
                             ? 'text-[#1DB954]'
-                            : 'text-[#b3b3b3] hover:text-white opacity-0 group-hover:opacity-100'
+                            : 'text-[#b3b3b3] md:opacity-0 md:group-hover:opacity-100'
                         }`}
                         title={isLiked ? 'Hapus dari Likes' : 'Suka'}
                       >
@@ -259,7 +259,7 @@ export function HomeGrid() {
                         <DropdownMenuTrigger asChild>
                           <button
                             onClick={(e) => e.stopPropagation()}
-                            className="p-1 rounded-full text-[#b3b3b3] hover:text-white opacity-0 group-hover:opacity-100 transition-all duration-200"
+                            className="p-1 rounded-full text-[#b3b3b3] hover:text-white md:opacity-0 md:group-hover:opacity-100 transition-all duration-200"
                             title="Opsi lainnya"
                           >
                             <MoreHorizontal className="w-4 h-4" />

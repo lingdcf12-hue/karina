@@ -186,17 +186,17 @@ export function SearchPage() {
                     <div className="flex items-center gap-4 pr-2">
                     <button 
                         onClick={(e) => { e.stopPropagation(); toggleLike(track); }}
-                        className={`transition-all duration-200 ${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3] opacity-0 group-hover:opacity-100'}`}
+                        className={`transition-all duration-200 ${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3] md:opacity-0 md:group-hover:opacity-100'}`}
                     >
                         <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
                     </button>
-                    <span className="text-xs text-[#b3b3b3] min-w-[32px]">{formatDuration(track.duration_ms)}</span>
+                    <span className="hidden md:block text-xs text-[#b3b3b3] min-w-[32px]">{formatDuration(track.duration_ms)}</span>
                     
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button 
                           onClick={(e) => e.stopPropagation()}
-                          className="text-[#b3b3b3] hover:text-white opacity-0 group-hover:opacity-100"
+                          className="text-[#b3b3b3] hover:text-white md:opacity-0 md:group-hover:opacity-100 p-1"
                         >
                           <MoreHorizontal className="w-5 h-5" />
                         </button>

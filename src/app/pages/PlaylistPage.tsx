@@ -228,7 +228,7 @@ export function PlaylistPage() {
                       className={`p-1.5 rounded-full transition-all ${
                         isLiked
                           ? 'text-[#1DB954]'
-                          : 'text-[#b3b3b3] hover:text-white opacity-0 group-hover:opacity-100'
+                          : 'text-[#b3b3b3] md:opacity-0 md:group-hover:opacity-100'
                       }`}
                     >
                       <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
@@ -238,7 +238,7 @@ export function PlaylistPage() {
                       <DropdownMenuTrigger asChild>
                         <button
                           onClick={(e) => e.stopPropagation()}
-                          className="p-1.5 rounded-full text-[#b3b3b3] hover:text-white opacity-0 group-hover:opacity-100 transition-all"
+                          className="p-1.5 rounded-full text-[#b3b3b3] hover:text-white md:opacity-0 md:group-hover:opacity-100 transition-all"
                         >
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
