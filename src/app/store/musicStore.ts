@@ -7,8 +7,8 @@ import { toast } from 'sonner';
 interface MusicStore extends PlayerState {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  currentView: 'home' | 'search' | 'library' | 'liked-songs' | 'queue' | 'playlist' | 'artist' | 'login' | 'register';
-  setCurrentView: (view: 'home' | 'search' | 'library' | 'liked-songs' | 'queue' | 'playlist' | 'artist' | 'login' | 'register') => void;
+  currentView: 'home' | 'search' | 'library' | 'liked-songs' | 'queue' | 'playlist' | 'artist' | 'login' | 'register' | 'profile';
+  setCurrentView: (view: 'home' | 'search' | 'library' | 'liked-songs' | 'queue' | 'playlist' | 'artist' | 'login' | 'register' | 'profile') => void;
   selectedId: string | null;
   setSelectedId: (id: string | null) => void;
   collection: any[];

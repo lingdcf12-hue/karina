@@ -12,6 +12,7 @@ import { LikedSongsPage } from "./pages/LikedSongsPage";
 import { QueuePage } from "./pages/QueuePage";
 import { PlaylistPage } from "./pages/PlaylistPage";
 import { LibraryPage } from "./pages/LibraryPage";
+import { ProfilePage } from "./pages/ProfilePage";
 import { AuthPage } from "./pages/AuthPage";
 import { GuestPromptModal } from "./components/GuestPromptModal";
 import { supabase } from "./utils/supabase";
@@ -34,6 +35,8 @@ export default function App() {
         return <PlaylistPage />;
       case 'library':
         return <LibraryPage />;
+      case 'profile':
+        return <ProfilePage />;
       default:
         return <HomeGrid />;
     }

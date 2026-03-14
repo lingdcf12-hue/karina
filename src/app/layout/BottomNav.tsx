@@ -18,7 +18,8 @@ export function BottomNav() {
         const isActive = 
           (item.id === 'home' && (currentView === 'home' || currentView === 'playlist')) ||
           (item.id === 'search' && currentView === 'search') ||
-          (item.id === 'library' && (currentView === 'library' || currentView === 'liked-songs'));
+          (item.id === 'library' && (currentView === 'library' || currentView === 'liked-songs')) ||
+          (item.id === 'profile' && currentView === 'profile');
 
         return (
           <button
@@ -26,6 +27,7 @@ export function BottomNav() {
             onClick={() => {
                 if (item.id === 'profile') {
                     if (!useMusicStore.getState().user) setCurrentView('login');
+                    else setCurrentView('profile');
                 }
                 else setCurrentView(item.id as any);
             }}

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { 
   ChevronDown, 
   MoreHorizontal, 
@@ -36,66 +37,108 @@ export function FullScreenPlayer({ isOpen, onClose }: FullScreenPlayerProps) {
     toggleRepeat,
     setProgress,
     likedTracks,
-    toggleLike
+    toggleLike,
+    dominantColor
   } = useMusicStore();
+
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Swipe to close logic
+  const handleTouchStart = (e: React.TouchEvent) => setTouchStart(e.targetTouches[0].clientY);
+  const handleTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientY);
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchEnd - touchStart;
+    const isSwipeDown = distance > 100;
+    if (isSwipeDown) onClose();
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
 
   if (!isOpen || !currentTrack) return null;
 
   const isLiked = likedTracks.find(t => t.id === currentTrack.id);
   const progressPercentage = (progress / (duration || 1)) * 100;
 
+  // Use a fallback if dominantColor is not set or is black
+  const bgColor = (dominantColor === '#121212' || !dominantColor) ? '#1a213a' : dominantColor;
+
   return (
-    <div className="fixed inset-0 z-[100] bg-gradient-to-b from-[#1a213a] via-[#121212] to-[#121212] text-white flex flex-col p-5 animate-in slide-in-from-bottom duration-500 ease-out overflow-hidden">
-      <div className="flex-1 flex flex-col h-full max-w-md mx-auto w-full justify-between py-2">
+    <div 
+      className="fixed inset-0 z-[100] text-white flex flex-col overflow-hidden select-none animate-in slide-in-from-bottom duration-500 ease-out"
+      style={{
+        background: `linear-gradient(to bottom, ${bgColor} 0%, #121212 100%)`
+      }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Mesh Gradient Overlay for extra aesthetic */}
+      <div className="absolute inset-0 opacity-40 pointer-events-none" 
+        style={{
+          background: `radial-gradient(circle at 20% 30%, ${bgColor} 0%, transparent 50%), 
+                     radial-gradient(circle at 80% 70%, ${bgColor} 0%, transparent 50%)`
+        }} 
+      />
+
+      <div className="relative flex-1 flex flex-col h-full max-w-md mx-auto w-full justify-between py-6 px-6">
         {/* Top Header */}
-        <div className="flex items-center justify-between shrink-0">
-          <button onClick={onClose} className="p-2 -ml-2 text-white active:scale-90 transition-transform">
+        <div className="flex items-center justify-between shrink-0 mb-4">
+          <button onClick={onClose} className="p-2 -ml-2 text-white active:scale-90 transition-transform hover:bg-white/10 rounded-full">
             <ChevronDown className="w-8 h-8" />
           </button>
-          <div className="flex flex-col items-center">
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#b3b3b3]">Memutar dari koleksi kamu</span>
-            <span className="text-[12px] font-bold truncate max-w-[200px]">Lagu yang Disukai</span>
+          <div className="flex flex-col items-center flex-1 min-w-0 px-4">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-0.5">MEMUTAR DARI KOLEKSI KAMU</span>
+            <span className="text-[13px] font-bold truncate w-full text-center">Lagu yang Disukai</span>
           </div>
-          <button className="p-2 -mr-2 text-white">
+          <button className="p-2 -mr-2 text-white hover:bg-white/10 rounded-full">
             <MoreHorizontal className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Album Art - Flexible height */}
-        <div className="flex-1 flex items-center justify-center min-h-0 my-4">
-          <div className="w-full aspect-square max-w-[85vh] max-h-[40vh] shadow-[0_20px_60px_rgba(0,0,0,0.7)] rounded-xl overflow-hidden active:scale-95 transition-transform duration-500">
+        {/* Album Art Container - Dynamic sizing */}
+        <div className="flex-1 flex items-center justify-center min-h-0 my-8 py-4">
+          <div className="w-full aspect-square max-h-[42vh] shadow-[0_30px_90px_rgba(0,0,0,0.8)] rounded-lg overflow-hidden active:scale-[0.98] transition-transform duration-500">
             <img 
               src={currentTrack.album.images[0].url} 
               alt={currentTrack.name}
-              className="w-full h-full object-cover" 
+              className="w-full h-full object-cover scale-105" 
             />
           </div>
         </div>
 
-        {/* Info, Seekbar, Controls Wrapper */}
+        {/* Bottom Section: Info, Progress, Controls */}
         <div className="shrink-0 flex flex-col">
           {/* Song Info */}
-          <div className="flex items-center justify-between gap-4 mb-6">
+          <div className="flex items-center justify-between gap-4 mb-8">
             <div className="min-w-0">
-              <h1 className="text-2xl font-black tracking-tight truncate leading-tight">{currentTrack.name}</h1>
-              <p className="text-[#b3b3b3] text-[16px] font-semibold truncate opacity-80">
+              <h1 className="text-[24px] font-black tracking-tight truncate leading-tight mb-1">{currentTrack.name}</h1>
+              <p className="text-white/70 text-[16px] font-medium truncate">
                   {currentTrack.artists.map(a => a.name).join(', ')}
               </p>
             </div>
-            <button onClick={() => toggleLike(currentTrack)} className="shrink-0 transition-all active:scale-125 p-1">
+            <button 
+              onClick={() => toggleLike(currentTrack)} 
+              className="shrink-0 transition-all active:scale-125 p-1"
+            >
               {isLiked ? (
                   <CheckCircle2 className="w-8 h-8 text-[#1DB954] fill-current" />
               ) : (
-                  <Heart className="w-8 h-8 text-[#b3b3b3]" />
+                  <Heart className="w-8 h-8 text-white/60" />
               )}
             </button>
           </div>
 
-          {/* Seekbar */}
-          <div className="flex flex-col gap-2 mb-6">
-            <div className="relative w-full h-1 bg-white/20 rounded-full group cursor-pointer">
-              <div className="absolute top-0 left-0 h-full bg-white rounded-full transition-all duration-100" style={{ width: `${progressPercentage}%` }} />
-              <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg" style={{ left: `calc(${progressPercentage}% - 6px)` }} />
+          {/* Progress Bar */}
+          <div className="flex flex-col gap-1.5 mb-8">
+            <div className="relative w-full h-1 group cursor-pointer flex items-center">
+              <div className="absolute inset-x-0 h-1 bg-white/20 rounded-full" />
+              <div className="absolute top-0 left-0 h-1 bg-white rounded-full" style={{ width: `${progressPercentage}%` }} />
+              <div 
+                className="absolute w-3.5 h-3.5 bg-white rounded-full shadow-lg" 
+                style={{ left: `calc(${progressPercentage}% - 7px)` }} 
+              />
               <input 
                 type="range" 
                 min="0" 
@@ -103,64 +146,74 @@ export function FullScreenPlayer({ isOpen, onClose }: FullScreenPlayerProps) {
                 value={progress} 
                 step="0.1"
                 onChange={(e) => setProgress(parseFloat(e.target.value))}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer z-10" 
               />
             </div>
-            <div className="flex items-center justify-between text-[#b3b3b3] text-[10px] font-bold tabular-nums">
+            <div className="flex items-center justify-between text-white/50 text-[11px] font-bold tabular-nums tracking-wider">
               <span>{formatTime(progress)}</span>
               <span>{formatTime(duration)}</span>
             </div>
           </div>
 
-          {/* Main Controls */}
-          <div className="flex items-center justify-between mb-8 px-1">
-            <button onClick={toggleShuffle} className={`${shuffle ? 'text-[#1DB954]' : 'text-white'} transition-colors`}>
+          {/* Player Controls */}
+          <div className="flex items-center justify-between mb-10 px-0.5">
+            <button onClick={toggleShuffle} className={`${shuffle ? 'text-[#1DB954]' : 'text-white/60'} transition-colors relative`}>
               <Shuffle className="w-6 h-6" />
+              {shuffle && <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#1DB954] rounded-full" />}
             </button>
             <button onClick={previousTrack} className="text-white active:scale-90 transition-transform">
-              <SkipBack className="w-10 h-10 fill-current" />
+              <SkipBack className="w-9 h-9 fill-current" />
             </button>
             <button 
               onClick={togglePlay}
-              className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-black shadow-xl active:scale-95 transition-transform shrink-0"
+              className="w-[72px] h-[72px] bg-white rounded-full flex items-center justify-center text-black shadow-2xl active:scale-90 transition-transform shrink-0"
             >
               {isPlaying ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current ml-1" />}
             </button>
             <button onClick={nextTrack} className="text-white active:scale-90 transition-transform">
-              <SkipForward className="w-10 h-10 fill-current" />
+              <SkipForward className="w-9 h-9 fill-current" />
             </button>
-            <button onClick={toggleRepeat} className={`${repeat !== 'off' ? 'text-[#1DB954]' : 'text-white'} transition-colors relative`}>
+            <button onClick={toggleRepeat} className={`${repeat !== 'off' ? 'text-[#1DB954]' : 'text-white/60'} transition-colors relative`}>
               <Repeat className="w-6 h-6" />
-              {repeat === 'track' && <span className="absolute -top-1 -right-1 bg-[#121212] text-[#1DB954] text-[8px] font-bold w-3 h-3 flex items-center justify-center rounded-full border border-[#1DB954]">1</span>}
+              {repeat !== 'off' && <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#1DB954] rounded-full" />}
+              {repeat === 'track' && <span className="absolute -top-1.5 -right-1.5 bg-[#121212] text-[#1DB954] text-[8px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full border border-[#1DB954]">1</span>}
             </button>
           </div>
 
-          {/* Device and Share */}
-          <div className="flex items-center justify-between mb-6 px-1">
-            <button className="text-[#1DB954] flex items-center gap-2">
+          {/* Footer Actions */}
+          <div className="flex items-center justify-between mb-8">
+            <button className="text-[#1DB954] flex items-center gap-2 active:scale-95 transition-transform">
               <Laptop2 className="w-4 h-4" />
-              <span className="text-[10px] font-bold uppercase tracking-widest leading-none">Web Player (Chrome)</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">Web Player (Chrome)</span>
             </button>
-            <div className="flex items-center gap-6">
-              <button className="text-white opacity-60 hover:opacity-100 transition-opacity"><Share2 className="w-5 h-5" /></button>
-              <button className="text-white opacity-60 hover:opacity-100 transition-opacity"><ListMusic className="w-5 h-5" /></button>
+            <div className="flex items-center gap-7 text-white/70">
+              <button className="active:scale-90 transition-transform hover:text-white"><Share2 className="w-5 h-5" /></button>
+              <button className="active:scale-90 transition-transform hover:text-white"><ListMusic className="w-5 h-5" /></button>
             </div>
           </div>
         </div>
 
-        {/* Lyrics Box Preview */}
-        <div className="bg-[#3e50b4] rounded-2xl p-5 relative overflow-hidden flex flex-col shrink-0">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-black tracking-tight">Pratinjau lirik</h3>
-            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center">
-                <ChevronDown className="w-3.5 h-3.5 rotate-180" />
+        {/* Lyrics Preview Card */}
+        <div 
+          className="rounded-2xl p-6 relative overflow-hidden flex flex-col shrink-0 min-h-[160px] cursor-pointer group active:scale-[0.98] transition-all duration-300"
+          style={{
+            background: `linear-gradient(135deg, ${bgColor} 0%, #3e50b4 100%)`,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+          }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[13px] font-black tracking-tighter uppercase">Pratinjau lirik</h3>
+            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md">
+                <ChevronDown className="w-4 h-4 rotate-180" />
             </div>
           </div>
-          <div className="flex flex-col gap-1 overflow-hidden">
-            <p className="text-[20px] font-black text-white/40 leading-tight">Something's different about you,</p>
-            <p className="text-[20px] font-black text-white leading-tight">I can feel it</p>
+          <div className="flex flex-col gap-2">
+            <p className="text-[22px] font-black text-white/40 leading-tight tracking-tight">Something's different about you,</p>
+            <p className="text-[22px] font-black text-white leading-tight tracking-tight">I can feel it</p>
           </div>
-          <div className="absolute bottom-0 right-0 w-24 h-24 bg-[#5c69ff] blur-[50px] opacity-40 -mb-8 -mr-8" />
+          {/* Decorative glass elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-[40px] rounded-full -mt-16 -mr-16" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/20 blur-[30px] rounded-full -mb-12 -ml-12" />
         </div>
       </div>
     </div>
