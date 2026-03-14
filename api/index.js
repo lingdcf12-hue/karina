@@ -78,25 +78,22 @@ app.get('/api/stream', async (req, res) => {
   if (!videoId) return res.status(400).send("ID diperlukan");
 
   try {
-    console.log(`🎬 Memutar Jalur Pipa: ${videoId}`);
+    console.log(`🎬 Mendapatkan URL Audio Langsung: ${videoId}`);
     
-    const stream = await yt.download(videoId, {
-      type: 'audio',
-      quality: 'best',
-      format: 'mp4'
-    });
-
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Accept-Ranges', 'bytes');
-
-    for await (const chunk of stream) {
-        res.write(chunk);
+    const info = await yt.getBasicInfo(videoId);
+    const audioFormat = info.chooseFormat({ type: 'audio', quality: 'best' });
+    
+    if (audioFormat && audioFormat.decipher) {
+        // Redirect browser langsung ke server GoogleVideo untuk dapat fitur Chunk, Seeking, dan No Vercel Limit!
+        const directUrl = audioFormat.decipher(yt.session.player);
+        return res.redirect(directUrl);
+    } else {
+        return res.status(404).send("Stream URL tidak ditemukan");
     }
-    res.end();
 
   } catch (error) {
     console.error("❌ Gagal Saluran:", error.message);
-    if (!res.headersSent) res.status(500).send("Gagal");
+    res.status(500).send("Gagal");
   }
 });
 
