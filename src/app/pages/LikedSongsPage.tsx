@@ -16,7 +16,7 @@ import {
 import { toast } from 'sonner';
 
 export function LikedSongsPage() {
-  const { likedTracks, setCurrentTrack, toggleLike, addToQueue, collection, addPlaylist, addTrackToPlaylist, setQueue } = useMusicStore();
+  const { likedTracks, setCurrentTrack, toggleLike, addToQueue, collection, addPlaylist, addTrackToPlaylist, setQueue, user } = useMusicStore();
   const tracks = likedTracks;
   const playlists = collection.filter(item => item.type === 'Playlist' && item.id !== 'fav');
 
@@ -43,45 +43,52 @@ export function LikedSongsPage() {
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-b from-[#450af5] to-[#121212] flex flex-col">
       {/* Header */}
-      <div className="p-4 md:p-8 pb-6 flex flex-col md:flex-row items-center md:items-end gap-6 mt-8 md:mt-12 bg-black/20 text-center md:text-left">
-        <div className="w-40 h-40 md:w-52 md:h-52 bg-gradient-to-br from-[#450af5] to-[#c4efd9] shadow-2xl flex items-center justify-center rounded">
-          <Heart className="w-20 h-20 md:w-24 md:h-24 text-white fill-current" />
+      <div className="p-6 md:p-8 pb-6 flex flex-col md:flex-row items-center md:items-end gap-6 mt-12 md:mt-12 text-center md:text-left">
+        <div className="w-44 h-44 md:w-52 md:h-52 bg-gradient-to-br from-[#450af5] to-[#c4efd9] shadow-[0_12px_36px_rgba(0,0,0,0.5)] flex items-center justify-center rounded-lg transform md:rotate-0 rotate-1">
+          <Heart className="w-20 h-20 md:w-24 md:h-24 text-white fill-current drop-shadow-lg" />
         </div>
-        <div className="flex flex-col gap-2">
-            <span className="text-white text-xs font-bold uppercase tracking-wider">Playlist</span>
-            <h1 className="text-4xl md:text-8xl font-black text-white leading-tight">Lagu yang Disukai</h1>
-            <div className="flex items-center justify-center md:justify-start gap-2 mt-4">
-                <div className="w-6 h-6 rounded-full bg-[#3d3d3d] flex items-center justify-center overflow-hidden">
-                    <span className="text-[10px] text-white">B</span>
+        <div className="flex flex-col gap-2 flex-1 min-w-0">
+            <span className="text-white text-[10px] md:text-xs font-bold uppercase tracking-[0.2em]">Playlist</span>
+            <h1 className="text-3xl md:text-8xl font-black text-white leading-tight tracking-tight">Lagu yang Disukai</h1>
+            <div className="flex items-center justify-center md:justify-start gap-1.5 mt-2">
+                <div className="w-5 h-5 rounded-full bg-[#3d3d3d] flex items-center justify-center overflow-hidden border border-white/10">
+                    <span className="text-[10px] text-white font-bold">{user?.name?.[0] || 'B'}</span>
                 </div>
-                <span className="text-white text-sm font-bold">Bagas</span>
-                <span className="text-white text-sm opacity-70">• {tracks.length} lagu</span>
+                <span className="text-white text-[13px] font-bold hover:underline cursor-pointer">{user?.name || 'Bagas'}</span>
+                <span className="text-[#b3b3b3] text-[13px] font-medium">• {tracks.length} lagu</span>
             </div>
         </div>
       </div>
 
-      <div className="flex-1 bg-black/30 backdrop-blur-md p-8 pt-6 pb-32">
+      <div className="flex-1 bg-black/20 backdrop-blur-sm p-4 md:p-8 pt-6 pb-32">
         {/* Actions Bar */}
-        <div className="flex items-center gap-8 mb-8">
+        <div className="flex items-center gap-6 mb-8 px-2">
             <button 
                 onClick={handlePlayLiked}
                 disabled={tracks.length === 0}
-                className="w-14 h-14 bg-[#1DB954] rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-xl disabled:opacity-50 disabled:hover:scale-100"
+                className="w-14 h-14 bg-[#1DB954] rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#1DB954]/20 disabled:opacity-40"
             >
                 <Play className="w-7 h-7 text-black fill-current ml-1" />
             </button>
-            <MoreHorizontal className="w-8 h-8 text-[#b3b3b3] hover:text-white cursor-pointer" />
+            <button className="text-[#b3b3b3] hover:text-white transition-colors">
+                <MoreHorizontal className="w-8 h-8" />
+            </button>
         </div>
 
         {/* Table Header */}
-        <div className="grid grid-cols-[16px_1fr_minmax(120px,auto)] md:grid-cols-[16px_4fr_3fr_minmax(120px,1fr)] gap-4 px-4 py-2 border-b border-white/10 text-[#b3b3b3] text-xs font-medium uppercase tracking-wider mb-4">
-            <span className="hidden md:block">#</span>
-            <div className="md:hidden flex items-center justify-center"><Heart className="w-4 h-4" /></div>
+        <div className="hidden md:grid grid-cols-[16px_4fr_3fr_minmax(120px,1fr)] gap-4 px-4 py-2 border-b border-white/10 text-[#b3b3b3] text-[11px] font-bold uppercase tracking-widest mb-4">
+            <span>#</span>
             <span>Judul</span>
-            <span className="hidden md:block">Album</span>
-            <div className="flex justify-end pr-4 md:pr-8">
+            <span>Album</span>
+            <div className="flex justify-end pr-8">
                 <Clock3 className="w-4 h-4" />
             </div>
+        </div>
+        
+        {/* Mobile Header Surrogate */}
+        <div className="md:hidden flex items-center justify-between px-4 py-2 border-b border-white/10 mb-4 text-[11px] font-bold text-[#b3b3b3] uppercase tracking-widest">
+            <span>Lagu</span>
+            <Clock3 className="w-4 h-4" />
         </div>
 
         {/* Tracks List */}
@@ -112,14 +119,14 @@ export function LikedSongsPage() {
 
                         <span className="text-sm text-[#b3b3b3] group-hover:text-white truncate hidden md:block">{track.album.name}</span>
 
-                        <div className="flex items-center justify-end gap-4 pr-4 relative">
+                        <div className="flex items-center justify-end gap-3 pr-2 relative">
                             <button 
                                 onClick={(e) => { e.stopPropagation(); toggleLike(track); }}
-                                className="text-[#1DB954] transition-all"
+                                className="text-[#1DB954] transition-all p-1"
                             >
-                                <Heart className="w-4 h-4 fill-current" />
+                                <Heart className="w-5 h-5 fill-current" />
                             </button>
-                            <span className="text-xs text-[#b3b3b3] min-w-[32px]">{formatDuration(track.duration_ms)}</span>
+                            <span className="text-xs text-[#b3b3b3] min-w-[32px] hidden md:block">{formatDuration(track.duration_ms)}</span>
 
                             <div className="relative">
                                 <DropdownMenu>

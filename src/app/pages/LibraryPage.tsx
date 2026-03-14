@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { 
   Plus, Search, List, Music, FolderOpen, 
   ChevronRight, ListPlus, Check, Menu, LayoutGrid, Grid2X2,
-  Trash2, Edit3, Pin, Globe, UserPlus, XCircle
+  Trash2, Edit3, Pin, Globe, UserPlus, XCircle, Heart
 } from 'lucide-react';
 import { useMusicStore } from '../store/musicStore';
 import { toast } from 'sonner';
@@ -191,35 +191,39 @@ export function LibraryPage() {
                 {/* Liked Songs Tile (Always first) */}
                 <div 
                     onClick={() => setCurrentView('liked-songs')}
-                    className={`flex items-center gap-3 p-2 rounded-md hover:bg-white/5 cursor-pointer transition-all ${isGrid ? 'flex-col items-center text-center' : ''}`}
+                    className={`flex items-center gap-4 p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-all ${isGrid ? 'flex-col items-start px-2 py-3' : ''}`}
                 >
-                    <div className={`bg-gradient-to-br from-[#450af5] to-[#8e8ee5] rounded flex items-center justify-center flex-shrink-0 shadow-lg ${isGrid ? 'w-full aspect-square' : 'w-16 h-16'}`}>
-                        <Music className="w-8 h-8 text-white" />
+                    <div className={`bg-gradient-to-br from-[#450af5] to-[#c4efd9] rounded flex items-center justify-center flex-shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.5)] ${isGrid ? 'w-full aspect-square mb-2' : 'w-16 h-16'}`}>
+                        <Heart className={`${isGrid ? 'w-10 h-10' : 'w-8 h-8'} text-white fill-current`} />
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-white font-bold truncate">Lagu yang Disukai</p>
-                        <p className="text-[#b3b3b3] text-sm truncate">Playlist • {likedTracks.length} lagu</p>
+                    <div className={`flex-1 min-w-0 ${isGrid ? 'w-full' : ''}`}>
+                        <p className="text-white font-bold text-[14px] md:text-[16px] truncate">Lagu yang Disukai</p>
+                        <div className="flex items-center gap-1.5">
+                            <Pin className="w-3 h-3 text-[#1DB954] fill-current" />
+                            <p className="text-[#b3b3b3] text-sm truncate font-medium">Playlist • {likedTracks.length} lagu</p>
+                        </div>
                     </div>
                 </div>
 
                 {filteredCollection.filter(item => item.id !== 'fav').map(item => {
                     const isActive = selectedId === item.id;
+                    const isArtist = item.type === 'Artis';
                     return (
                         <div 
                             key={item.id}
                             onClick={() => { setSelectedId(item.id); setCurrentView('playlist'); }}
-                            className={`flex items-center gap-3 p-2 rounded-md hover:bg-white/5 cursor-pointer transition-all ${isGrid ? 'flex-col items-center text-center' : ''}`}
+                            className={`flex items-center gap-4 p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-all ${isGrid ? 'flex-col items-start px-2 py-3' : ''}`}
                         >
-                            <div className={`bg-[#282828] rounded flex items-center justify-center flex-shrink-0 shadow-lg overflow-hidden ${isGrid ? 'w-full aspect-square' : 'w-16 h-16'}`}>
+                            <div className={`bg-[#282828] flex items-center justify-center flex-shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.5)] overflow-hidden ${isArtist ? 'rounded-full' : 'rounded-md'} ${isGrid ? 'w-full aspect-square mb-2' : 'w-16 h-16'}`}>
                                 {item.image && item.image !== 'folder' ? (
                                     <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                                 ) : (
-                                    <FolderOpen className="w-8 h-8 text-[#b3b3b3]" />
+                                    isArtist ? <UserPlus className="w-8 h-8 text-[#b3b3b3]" /> : <FolderOpen className="w-8 h-8 text-[#b3b3b3]" />
                                 )}
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <p className={`font-bold truncate ${isActive ? 'text-[#1DB954]' : 'text-white'}`}>{item.name}</p>
-                                <p className="text-[#b3b3b3] text-sm truncate">{item.type} • {item.owner || 'Kamu'}</p>
+                            <div className={`flex-1 min-w-0 ${isGrid ? 'w-full' : ''}`}>
+                                <p className={`font-bold text-[14px] md:text-[16px] truncate ${isActive ? 'text-[#1DB954]' : 'text-white'}`}>{item.name}</p>
+                                <p className="text-[#b3b3b3] text-sm truncate font-medium">{item.type} • {item.owner || 'Kamu'}</p>
                             </div>
                         </div>
                     );
@@ -228,14 +232,14 @@ export function LibraryPage() {
                 {/* Create New Playlist Tile */}
                 <div 
                     onClick={handleAddPlaylist}
-                    className={`flex items-center gap-3 p-2 rounded-md hover:bg-white/5 cursor-pointer transition-all group ${isGrid ? 'flex-col items-center text-center' : ''}`}
+                    className={`flex items-center gap-4 p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-all group ${isGrid ? 'flex-col items-start px-2 py-3' : ''}`}
                 >
-                    <div className={`bg-[#282828] rounded flex items-center justify-center flex-shrink-0 border border-dashed border-white/20 group-hover:border-white/40 shadow-lg ${isGrid ? 'w-full aspect-square' : 'w-16 h-16'}`}>
+                    <div className={`bg-[#282828] rounded-md flex items-center justify-center flex-shrink-0 border border-dashed border-white/20 group-hover:border-white/40 shadow-lg transition-colors ${isGrid ? 'w-full aspect-square mb-2' : 'w-16 h-16'}`}>
                         <Plus className="w-8 h-8 text-[#b3b3b3] group-hover:text-white transition-colors" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-white font-bold truncate">Tambah Playlist Baru</p>
-                        <p className="text-[#b3b3b3] text-sm truncate">Buat koleksi baru</p>
+                    <div className={`flex-1 min-w-0 ${isGrid ? 'w-full' : ''}`}>
+                        <p className="text-white font-bold text-[14px] md:text-[16px] truncate group-hover:text-[#1DB954] transition-colors">Tambah Playlist</p>
+                        <p className="text-[#b3b3b3] text-sm truncate font-medium">Buat koleksi baru</p>
                     </div>
                 </div>
             </div>

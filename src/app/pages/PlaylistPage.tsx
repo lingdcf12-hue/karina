@@ -76,11 +76,11 @@ export function PlaylistPage() {
 
         {/* Header Content */}
         <div
-          className="relative p-6 md:p-8 pt-12 flex flex-col sm:flex-row items-start sm:items-end gap-6 cursor-pointer group"
+          className="relative p-6 md:p-8 pt-12 flex flex-col sm:flex-row items-center sm:items-end gap-6 cursor-pointer group text-center sm:text-left"
           onClick={() => setIsEditModalOpen(true)}
         >
           {/* Playlist Cover */}
-          <div className="w-44 h-44 md:w-52 md:h-52 bg-[#282828] shadow-2xl flex items-center justify-center rounded-lg overflow-hidden flex-shrink-0 relative">
+          <div className="w-44 h-44 md:w-52 md:h-52 bg-[#282828] shadow-[0_12px_36px_rgba(0,0,0,0.5)] flex items-center justify-center rounded-lg overflow-hidden flex-shrink-0 relative">
             {playlist.image === 'folder' || !playlist.image ? (
               <Music className="w-24 h-24 text-[#b3b3b3]" />
             ) : (
@@ -99,29 +99,29 @@ export function PlaylistPage() {
 
           {/* Playlist Info */}
           <div className="flex flex-col gap-2 flex-1 min-w-0">
-            <span className="text-white text-xs font-bold uppercase tracking-widest">
+            <span className="text-white text-[10px] md:text-xs font-bold uppercase tracking-[0.2em]">
               {playlist.type}
             </span>
             <h1
-              className="text-white font-black leading-none truncate"
+              className="text-white font-black leading-tight tracking-tight truncate"
               style={{ fontSize: 'clamp(1.8rem, 5vw, 4.5rem)' }}
               title={playlist.name}
             >
               {playlist.name}
             </h1>
             {playlist.description && (
-              <p className="text-[#b3b3b3] text-sm line-clamp-2 mt-1 max-w-xl">
+              <p className="text-[#b3b3b3] text-sm line-clamp-2 mt-1 max-w-xl mx-auto sm:mx-0">
                 {playlist.description}
               </p>
             )}
-            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-              <span className="text-white text-sm font-bold">{playlist.owner || 'Saya'}</span>
-              <span className="text-[#b3b3b3] text-sm">•</span>
-              <span className="text-[#b3b3b3] text-sm">{tracks.length} lagu</span>
+            <div className="flex items-center justify-center sm:justify-start gap-1.5 mt-2 flex-wrap text-[#b3b3b3] text-[13px] font-medium">
+              <span className="text-white font-bold">{playlist.owner || 'Saya'}</span>
+              <span>•</span>
+              <span>{tracks.length} lagu</span>
               {totalMins > 0 && (
                 <>
-                  <span className="text-[#b3b3b3] text-sm">•</span>
-                  <span className="text-[#b3b3b3] text-sm">sekitar {totalMins} menit</span>
+                  <span>•</span>
+                  <span>sekitar {totalMins} menit</span>
                 </>
               )}
             </div>
@@ -134,7 +134,7 @@ export function PlaylistPage() {
         <button
           onClick={handlePlayPlaylist}
           disabled={tracks.length === 0}
-          className="w-14 h-14 bg-[#1DB954] rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#1DB954]/30 disabled:opacity-40 disabled:hover:scale-100"
+          className="w-14 h-14 bg-[#1DB954] rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#1DB954]/20 disabled:opacity-40"
         >
           <Play className="w-7 h-7 text-black fill-current ml-1" />
         </button>
@@ -166,9 +166,9 @@ export function PlaylistPage() {
         </div>
 
         {/* Mobile Header Surrogate */}
-        <div className="md:hidden flex items-center justify-between px-4 py-2 border-b border-white/10 mb-2">
-           <span className="text-[#b3b3b3] text-xs font-medium uppercase tracking-wider">Lagu</span>
-           <Clock3 className="w-4 h-4 text-[#b3b3b3]" />
+        <div className="md:hidden flex items-center justify-between px-4 py-2 border-b border-white/10 mb-4 text-[11px] font-bold text-[#b3b3b3] uppercase tracking-widest">
+            <span>Lagu</span>
+            <Clock3 className="w-4 h-4" />
         </div>
 
         {/* Empty State */}
