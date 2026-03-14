@@ -212,7 +212,7 @@ export function MusicPlayer() {
                 setProgress(player.getCurrentTime());
             }
         } catch (e) {}
-    }, 500);
+    }, 100); // Dipercepat dari 500ms ke 100ms untuk menghilangkan delay UI
     return () => clearInterval(interval);
   }, [player, isPlayerReady]);
 
