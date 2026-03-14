@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  ChevronDown, 
+  ChevronLeft, 
   MoreHorizontal, 
   Heart, 
   Shuffle, 
@@ -111,12 +111,12 @@ export function FullScreenPlayer({ isOpen, onClose }: FullScreenPlayerProps) {
           <button 
             onClick={(e) => { 
               e.stopPropagation(); 
-              onClose(); 
+              window.history.back(); 
             }} 
             className="w-11 h-11 flex items-center justify-center text-white active:scale-90 transition-transform rounded-full -ml-1"
             aria-label="Kembali"
           >
-            <ChevronDown className="w-9 h-9" strokeWidth={2} />
+            <ChevronLeft className="w-9 h-9" strokeWidth={2} />
           </button>
           <div className="flex flex-col items-center flex-1 min-w-0 px-3">
             <span className="text-[10px] font-black uppercase tracking-[0.15em] text-white/60 mb-0.5">MEMUTAR DARI KOLEKSI KAMU</span>
@@ -220,27 +220,6 @@ export function FullScreenPlayer({ isOpen, onClose }: FullScreenPlayerProps) {
           </div>
         </div>
 
-        {/* ===== LYRICS PREVIEW ===== */}
-        <div 
-          className="rounded-2xl p-5 relative overflow-hidden flex flex-col shrink-0 mb-4 cursor-pointer active:scale-[0.98] transition-all duration-300"
-          style={{
-            background: `linear-gradient(135deg, ${bgColor} 0%, #3e50b4 100%)`,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
-          }}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[13px] font-black tracking-tight uppercase">Pratinjau lirik</h3>
-            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md">
-                <ChevronDown className="w-4 h-4 rotate-180" />
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <p className="text-[20px] font-black text-white/40 leading-tight tracking-tight">Something's different about you,</p>
-            <p className="text-[20px] font-black text-white leading-tight tracking-tight">I can feel it</p>
-          </div>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-[40px] rounded-full -mt-16 -mr-16" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/20 blur-[30px] rounded-full -mb-12 -ml-12" />
-        </div>
       </div>
     </div>
   );
