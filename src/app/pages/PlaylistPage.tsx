@@ -151,7 +151,7 @@ export function PlaylistPage() {
       </div>
 
       {/* ── Track Table ── */}
-      <div className="px-4 md:px-6 pb-8">
+      <div className="px-4 md:px-6 pb-32">
         {/* Table Header */}
         <div className="gap-4 px-4 py-2 border-b border-white/10 mb-1 md:grid hidden"
           style={{ gridTemplateColumns: '16px 1fr 1fr 80px 48px' }}

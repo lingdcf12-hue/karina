@@ -60,7 +60,7 @@ export function LikedSongsPage() {
         </div>
       </div>
 
-      <div className="flex-1 bg-black/30 backdrop-blur-md p-8 pt-6">
+      <div className="flex-1 bg-black/30 backdrop-blur-md p-8 pt-6 pb-32">
         {/* Actions Bar */}
         <div className="flex items-center gap-8 mb-8">
             <button 

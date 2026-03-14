@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Play, CheckCircle2, MoreHorizontal, ChevronRight, Heart, PlusCircle } from 'lucide-react';
+import { Play, CheckCircle2, MoreHorizontal, ChevronRight, Heart, PlusCircle, Search, X } from 'lucide-react';
 import { useMusicStore } from '../store/musicStore';
 import { formatDuration } from '../utils/formatters';
 import { Track } from '../types/music';
@@ -18,15 +18,16 @@ import { toast } from 'sonner';
 
 export function SearchPage() {
   const { 
-    searchQuery, 
-    setCurrentTrack, 
-    addToQueue, 
-    queue, 
-    likedTracks, 
-    toggleLike, 
-    collection, 
+    searchQuery,
+    setCurrentTrack,
+    addToQueue,
+    queue,
+    likedTracks,
+    toggleLike,
+    collection,
     addTrackToPlaylist,
-    addPlaylist 
+    addPlaylist,
+    setSearchQuery
   } = useMusicStore();
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +89,31 @@ export function SearchPage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#121212] p-4 md:p-8 pb-24">
+    <div className="flex-1 overflow-y-auto bg-[#121212] p-4 md:p-8 pb-32">
+      {/* Mobile Search Bar - Only visible on small screens */}
+      <div className="md:hidden sticky top-0 z-20 bg-[#121212] pb-4 -mx-4 px-4">
+        <h1 className="text-2xl font-bold text-white mb-4">Cari</h1>
+        <div className="relative group">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#121212] transition-colors pointer-events-none">
+            <Search className="w-5 h-5" strokeWidth={2.5} />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Apa yang ingin kamu putar?"
+            className="w-full h-12 bg-white text-black pl-11 pr-12 rounded-lg text-sm font-bold placeholder-[#757575] outline-none"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-[10px] top-1/2 -translate-y-1/2 text-[#757575] hover:text-black p-1 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+      </div>
       {/* Search Filters */}
       <div className="flex items-center gap-2 mb-8 overflow-x-auto scrollbar-none">
         <button className="px-3 py-1 bg-white text-black rounded-full text-sm font-medium">Semua</button>

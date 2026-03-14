@@ -80,7 +80,7 @@ export function HomeGrid() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto pb-24 relative">
+    <div className="flex-1 overflow-y-auto pb-32 relative">
       {/* Background Gradient */}
       <div 
         className="absolute inset-0 pointer-events-none transition-all duration-1000"

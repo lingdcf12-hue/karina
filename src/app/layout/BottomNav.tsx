@@ -12,7 +12,7 @@ export function BottomNav() {
   ];
 
   return (
-    <div className="md:hidden h-16 bg-gradient-to-t from-black to-black/90 backdrop-blur-lg border-t border-white/5 flex items-center justify-around px-2 relative">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-black/95 backdrop-blur-md border-t border-white/10 flex items-center justify-around px-2 z-50 pb-safe">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = 
