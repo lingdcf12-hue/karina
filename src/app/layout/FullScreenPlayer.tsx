@@ -88,7 +88,7 @@ export function FullScreenPlayer({ isOpen, onClose }: FullScreenPlayerProps) {
     <div 
       className="fixed inset-0 z-[9999] text-white flex flex-col overflow-y-auto overflow-x-hidden select-none"
       style={{
-        background: `linear-gradient(to bottom, ${bgColor} 0%, ${bgColor}88 30%, #121212 100%)`
+        background: `linear-gradient(to bottom, ${bgColor} 0%, ${bgColor} 20%, #121212 100%)`
       }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
