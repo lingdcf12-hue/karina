@@ -183,10 +183,10 @@ export function SearchPage() {
                         {track.artists.map(a => a.name).join(', ')}
                     </p>
                     </div>
-                    <div className="flex items-center gap-4 pr-2">
+                    <div className="flex items-center justify-end gap-1 md:gap-4 pr-1 md:pr-2">
                     <button 
                         onClick={(e) => { e.stopPropagation(); toggleLike(track); }}
-                        className={`transition-all duration-200 ${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3] md:opacity-0 md:group-hover:opacity-100'}`}
+                        className={`p-1.5 transition-all duration-200 ${isLiked ? 'text-[#1DB954]' : 'text-[#b3b3b3] md:opacity-0 md:group-hover:opacity-100'}`}
                     >
                         <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
                     </button>

@@ -14,10 +14,12 @@ import {
   Maximize2,
   CheckCircle2,
   MoreHorizontal,
-  Heart
+  Heart,
+  ChevronDown
 } from 'lucide-react';
 import { useMusicStore } from '../store/musicStore';
 import { formatTime } from '../utils/formatters';
+import { FullScreenPlayer } from './FullScreenPlayer';
 
 const TickerText = ({ text, className }: { text: string; className: string }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -98,6 +100,7 @@ export function MusicPlayer() {
   const [player, setPlayer] = useState<any>(null);
   const [isReady, setIsReady] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
 
   // 1. Inisialisasi API YouTube
   useEffect(() => {
@@ -287,7 +290,12 @@ export function MusicPlayer() {
       )}
 
       {/* Info Lagu (Kiri) */}
-      <div className="flex items-center gap-3 w-full md:w-[30%] min-w-0 md:pr-2">
+      <div 
+        onClick={() => {
+          if (window.innerWidth < 768) setIsFullScreenOpen(true);
+        }}
+        className="flex items-center gap-3 w-full md:w-[30%] min-w-0 md:pr-2 cursor-pointer md:cursor-default"
+      >
         <img src={currentTrack?.album?.images[0]?.url} alt={currentTrack?.name} className="w-10 h-10 md:w-14 md:h-14 rounded object-cover shadow-lg shrink-0" />
         <div className="flex flex-col min-w-0 flex-1 overflow-hidden justify-center gap-[1px]">
           <TickerText text={currentTrack?.name || ''} className="text-white text-[13px] md:text-sm font-medium hover:underline cursor-pointer" />
@@ -300,7 +308,7 @@ export function MusicPlayer() {
         </div>
         
         {/* Mobile controls inside info area */}
-        <div className="flex items-center gap-2 md:hidden shrink-0 ml-auto bg-[#1a1a1a] pl-2">
+        <div className="flex items-center gap-2 md:hidden shrink-0 ml-auto bg-[#121212] pl-2" onClick={(e) => e.stopPropagation()}>
             <button className="text-[#b3b3b3] hover:text-[#1DB954] transition-colors p-1">
                <Laptop2 className="w-5 h-5" />
             </button>
@@ -378,10 +386,14 @@ export function MusicPlayer() {
         <Maximize2 className="w-4 h-4 text-[#b3b3b3]" />
       </div>
 
-      {/* Progress Bar Mobile - inside the floating bar bottom */}
       <div className="absolute bottom-0 left-2 right-2 h-[3px] bg-white/10 md:hidden overflow-hidden rounded-full mb-[2px]">
         <div className="h-full bg-white transition-all duration-300 rounded-full" style={{ width: `${progressPercentage}%` }} />
       </div>
+
+      <FullScreenPlayer 
+        isOpen={isFullScreenOpen}
+        onClose={() => setIsFullScreenOpen(false)}
+      />
     </div>
   );
 }

@@ -186,7 +186,7 @@ export function PlaylistPage() {
                 <div
                   key={track.id}
                   onClick={() => handleTrackClick(track)}
-                  className="grid gap-2 md:gap-4 px-2 md:px-4 py-2 rounded-md hover:bg-white/10 group transition-colors cursor-pointer items-center grid-cols-[auto_1fr_auto] md:grid-cols-[32px_1fr_1fr_80px_48px]"
+                  className="grid grid-cols-[1fr_auto] md:grid-cols-[32px_1fr_1fr_80px_48px] gap-4 px-3 md:px-4 py-2 rounded-md hover:bg-white/10 group transition-colors cursor-pointer items-center"
                 >
                   {/* Index / Play Icon - Hidden on mobile */}
                   <div className="hidden md:flex items-center justify-center">
@@ -217,12 +217,12 @@ export function PlaylistPage() {
                   </p>
 
                   {/* Duration */}
-                  <p className="text-xs text-[#b3b3b3] text-center">
+                  <p className="text-xs text-[#b3b3b3] text-center hidden md:block">
                     {formatDuration(track.duration_ms)}
                   </p>
 
                   {/* Actions */}
-                  <div className="flex items-center justify-end gap-1">
+                  <div className="flex items-center justify-end gap-1 md:gap-1">
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleLike(track); }}
                       className={`p-1.5 rounded-full transition-all ${

@@ -104,10 +104,12 @@ export function LikedSongsPage() {
                     <div 
                         key={track.id}
                         onClick={() => handleTrackClick(track)}
-                        className="grid grid-cols-[16px_1fr_minmax(120px,auto)] md:grid-cols-[16px_4fr_3fr_minmax(120px,1fr)] gap-4 px-4 py-2 rounded-md hover:bg-white/10 group transition-colors cursor-pointer items-center"
+                        className="grid grid-cols-[1fr_auto] md:grid-cols-[32px_4fr_3fr_minmax(120px,1fr)] gap-4 px-3 md:px-4 py-2 rounded-md hover:bg-white/10 group transition-colors cursor-pointer items-center"
                     >
-                        <span className="text-[#b3b3b3] text-sm group-hover:hidden hidden md:block">{index + 1}</span>
-                        <Play className="w-3.5 h-3.5 text-white fill-current hidden group-hover:block" />
+                        <div className="hidden md:flex items-center justify-center">
+                            <span className="text-[#b3b3b3] text-sm group-hover:hidden">{index + 1}</span>
+                            <Play className="w-3.5 h-3.5 text-white fill-current hidden group-hover:block" />
+                        </div>
                         
                         <div className="flex items-center gap-3 min-w-0">
                             <img src={track.album.images[0].url} alt={track.name} className="w-10 h-10 rounded object-cover flex-shrink-0" />
@@ -119,10 +121,10 @@ export function LikedSongsPage() {
 
                         <span className="text-sm text-[#b3b3b3] group-hover:text-white truncate hidden md:block">{track.album.name}</span>
 
-                        <div className="flex items-center justify-end gap-3 pr-2 relative">
+                        <div className="flex items-center justify-end gap-2 md:gap-4 pr-1 md:pr-4 relative">
                             <button 
                                 onClick={(e) => { e.stopPropagation(); toggleLike(track); }}
-                                className="text-[#1DB954] transition-all p-1"
+                                className="text-[#1DB954] transition-all p-2"
                             >
                                 <Heart className="w-5 h-5 fill-current" />
                             </button>
