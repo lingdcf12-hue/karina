@@ -216,6 +216,71 @@ export function MusicPlayer() {
     return () => clearInterval(interval);
   }, [player, isPlayerReady]);
 
+  // 3. Media Session API untuk Kontrol Luar Web (Mobile/Lockscreen)
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !currentTrack) return;
+
+    // Update Metadata (Gambar, Judul, Artist)
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentTrack.name,
+      artist: currentTrack.artists?.map((a: any) => a.name).join(', '),
+      album: currentTrack.album?.name || 'YouTube Music',
+      artwork: [
+        { src: currentTrack.album?.images[0]?.url || '', sizes: '512x512', type: 'image/jpeg' },
+        { src: currentTrack.album?.images[1]?.url || '', sizes: '300x300', type: 'image/jpeg' },
+        { src: currentTrack.album?.images[2]?.url || '', sizes: '64x64', type: 'image/jpeg' },
+      ]
+    });
+
+    // Action Handlers
+    const handlers = [
+        ['play', () => { handleTogglePlay(); }],
+        ['pause', () => { handleTogglePlay(); }],
+        ['previoustrack', () => { handlePrevious(); }],
+        ['nexttrack', () => { handleNext(); }],
+        ['stop', () => { pause(); }],
+        ['seekto', (details: any) => { 
+            if (details.seekTime !== undefined && player) {
+                player.seekTo(details.seekTime, true);
+                setProgress(details.seekTime);
+            }
+        }]
+    ];
+
+    for (const [action, handler] of handlers) {
+        try {
+            navigator.mediaSession.setActionHandler(action as any, handler as any);
+        } catch (error) {
+            console.error(`Gagal set action handler ${action}:`, error);
+        }
+    }
+
+    return () => {
+        for (const [action] of handlers) {
+            navigator.mediaSession.setActionHandler(action as any, null);
+        }
+    };
+  }, [currentTrack, player, isPlayerReady, isPlaying]);
+
+  // 4. Update Playback State & Position (Lockscreen Sync)
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession && duration > 0) {
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: duration,
+          playbackRate: 1,
+          position: Math.min(progress, duration)
+        });
+      } catch (e) {}
+    }
+  }, [progress, duration]);
+
   const handleTogglePlay = () => {
     if (!currentTrack) return;
     togglePlay();
