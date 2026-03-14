@@ -9,7 +9,7 @@ export function TopBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="h-14 flex items-center px-4 gap-2 bg-black w-full min-w-0 flex-shrink-0 z-50">
+    <div className="h-14 flex items-center px-4 md:px-4 gap-2 bg-black w-full min-w-0 flex-shrink-0 z-50">
       {/* Left Area: Avatar (Mobile) or Logo (Desktop) */}
       <div className="flex items-center">
         {user ? (

@@ -89,30 +89,32 @@ export function SearchPage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#121212] p-4 md:p-8 pb-32">
-      {/* Mobile Search Bar - Attached to top nav */}
-      <div className="md:hidden sticky top-0 z-20 bg-[#121212] py-3 px-4 border-b border-white/5">
-        <div className="relative group">
-          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#121212] transition-colors pointer-events-none">
-            <Search className="w-5 h-5" strokeWidth={2.5} />
+    <div className="flex-1 overflow-y-auto bg-[#121212] md:p-8 pb-32">
+      {/* Mobile Search Bar - Docked to TopBar */}
+      <div className="md:hidden sticky top-0 z-30 bg-black pt-1 pb-4 px-4 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+        <div className="relative">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#121212] pointer-events-none">
+            <Search className="w-5 h-5" strokeWidth={3} />
           </div>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Apa yang ingin kamu putar?"
-            className="w-full h-10 bg-white text-black pl-11 pr-12 rounded-md text-sm font-bold placeholder-[#757575] outline-none"
+            className="w-full h-12 bg-white text-black pl-11 pr-12 rounded-lg text-sm font-bold placeholder-[#757575] outline-none shadow-inner"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-[10px] top-1/2 -translate-y-1/2 text-[#757575] hover:text-black p-1 transition-colors"
+              className="absolute right-[12px] top-1/2 -translate-y-1/2 text-[#757575] hover:text-black p-1 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           )}
         </div>
       </div>
+
+      <div className="p-4 md:p-0"> {/* Content padding for mobile */}
       {/* Search Filters */}
       <div className="flex items-center gap-2 mb-8 overflow-x-auto scrollbar-none">
         <button className="px-3 py-1 bg-white text-black rounded-full text-sm font-medium">Semua</button>
@@ -262,6 +264,7 @@ export function SearchPage() {
               </div>
           </div>
       )}
+      </div>
     </div>
   );
 }
