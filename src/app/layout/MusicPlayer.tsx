@@ -102,21 +102,27 @@ export function MusicPlayer() {
   const [isReady, setIsReady] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
-  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const silentVideoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Hack: Putar audio native kosong agar browser tidak menyetop tab ini di background
-  // Harus menggunakan polanya "unlock on first user interaction" agar diizinkan oleh mobile browser
+  // Hack: Putar VIDEO transparan/kosong (bukan cuma audio) agar browser tidak menyetop media.
+  // Video mendapat prioritas jauh lebih tinggi di background/lockscreen (khusus iOS/Android Chrome/Safari).
   useEffect(() => {
-    if (!silentAudioRef.current) {
-      const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
-      audio.loop = true;
-      silentAudioRef.current = audio;
+    if (!silentVideoRef.current) {
+      const video = document.createElement('video');
+      // 1x1 black silent mp4 base64 (sangat kecil)
+      video.src = "data:video/mp4;base64,AAAAHGZ0eXBpc29tAAACAGlzb21pc28yYXZjMQAAAAhmcmVlAAAGsW1kYXQAAAKqBgX//5x/ex//+EIfBQAAPwAAAQAAABAQEBAQEBAQEBAQEBAwEBAQEBAQEBAQMBAQEBAQEBAQEBAQADAwEBAQEBAQEBAQADAwEBAQEBAQEBAQEBAQAAAAgH/gMvAAAAAAQQAQ0BBAgP/gFNAAAAAAQQAQ0BBAiA/sENAAAAAAQQAQ0BBBAAAAAAAgIAAED/+Bf/72P/4F//vY//gX/++H/+Bf/72P/4F//vY//gAADAwAAzAAAL21vb3YAAABsbXZoZAAAAADR1YpI0dWKSJAAAAABAAAC7wABAAQAAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAGGlvZHMAAAAAEID/AAEAAQACAQAAAHB0cmFrAAAAXHRraGQAAAAD0dWKSNHVikgAAAABAAAAAAAC7wAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAYEbWRpYQAAACBtZGhkAAAAANHVikjR1YpIFQAAAAAAAu8AAAAAAAAAIMWhZGxyAAAAAAAAAAB2aWRlAAAAAAAAAAAAAAAAVmlkZW9IYW5kbGVyAAAABTBtaW5mAAAAFHZtaGQAAAABAAAAAAAAAAAAAAAkZGluZgAAABxkcmVmAAAAAAAAAAEAAAAMdXJsIAAAAAEAAAQpc3RibAAAALhzdHNkAAAAAAAAAAEAAACoYXZjMQAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAABAABAAEgAAABIAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY//8AAAAxYXZjQwH0AAr/4QAaZ/QACqywEwgIUAAxIswCAAADAAIAAAMAg8x8QgAEZmmDAAAADHN0dHMAAAAAAAAAAQAAAAEAAAMiAAAAFHN0c3MAAAAAAAAAAQAAAAEAAAAUc3RzYwAAAAAAAAABAAAAAQAAAAEAAAABAAAAKHN0c3oAAAAAAAAAAAAAAAEAAAKqAAAAFHN0Y28AAAAAAAAAAQAAADAAAAAwdWR0YQAAAChtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAA";
+      video.loop = true;
+      video.playsInline = true; 
+      video.muted = false; 
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('webkit-playsinline', 'true');
+      silentVideoRef.current = video;
 
       const unlockAudio = () => {
-        if (silentAudioRef.current) {
-          silentAudioRef.current.play().then(() => {
+        if (silentVideoRef.current) {
+          silentVideoRef.current.play().then(() => {
             if (!useMusicStore.getState().isPlaying) {
-              silentAudioRef.current?.pause();
+              silentVideoRef.current?.pause();
             }
           }).catch(() => {});
         }
@@ -130,16 +136,19 @@ export function MusicPlayer() {
       return () => {
         document.removeEventListener('click', unlockAudio);
         document.removeEventListener('touchstart', unlockAudio);
+        if (silentVideoRef.current) {
+           silentVideoRef.current.pause();
+        }
       };
     }
   }, []);
 
   useEffect(() => {
-    if (silentAudioRef.current) {
+    if (silentVideoRef.current) {
       if (isPlaying) {
-        silentAudioRef.current.play().catch(() => {});
+        silentVideoRef.current.play().catch(() => {});
       } else {
-        silentAudioRef.current.pause();
+        silentVideoRef.current.pause();
       }
     }
   }, [isPlaying]);
