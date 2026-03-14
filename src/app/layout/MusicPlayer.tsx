@@ -264,15 +264,14 @@ export function MusicPlayer() {
       ${currentTrack ? 'flex' : 'hidden'}
       flex-col md:flex-row
       bg-black md:bg-black
-      border-t border-[#121212] md:border-t
-      p-2 md:px-4 md:h-[90px]
-      items-center justify-between select-none relative
+      border-t border-white/5 md:border-[#121212]
+      p-2 md:px-4 h-[64px] md:h-[90px]
+      items-center justify-between select-none
       transition-all duration-300
-      ${currentTrack ? 'translate-y-0' : 'translate-y-full'}
-      md:static fixed bottom-[64px] left-2 right-2 md:bottom-auto md:left-auto md:right-auto
+      md:static fixed bottom-[72px] left-2 right-2 md:bottom-auto md:left-auto md:right-auto
       rounded-lg md:rounded-none
-      bg-[#1a1a1a] md:bg-black
-      z-[40] md:z-auto
+      bg-[#282828]/95 backdrop-blur-md md:bg-black
+      z-40 shadow-[0_-8px_24px_rgba(0,0,0,0.5)]
     `}>
       {/* Hidden Player Container - MUST ALWAYS BE PRESENT */}
       <div style={{ position: 'absolute', top: '-1000px', left: '-1000px' }}>
