@@ -268,10 +268,10 @@ export function MusicPlayer() {
       p-2 md:px-4 h-[64px] md:h-[90px]
       items-center justify-between select-none
       transition-all duration-300
-      md:static fixed bottom-[72px] left-2 right-2 md:bottom-auto md:left-auto md:right-auto
-      rounded-lg md:rounded-none
-      bg-[#282828]/95 backdrop-blur-md md:bg-black
-      z-40 shadow-[0_-8px_24px_rgba(0,0,0,0.5)]
+      md:static fixed bottom-[64px] left-0 right-0 md:bottom-auto md:left-auto md:right-auto
+      rounded-none
+      bg-[#121212] border-t border-white/10 md:bg-black
+      z-40 shadow-[0_-4px_12px_rgba(0,0,0,0.5)]
     `}>
       {/* Hidden Player Container - MUST ALWAYS BE PRESENT */}
       <div style={{ position: 'absolute', top: '-1000px', left: '-1000px' }}>

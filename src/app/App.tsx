@@ -94,14 +94,14 @@ export default function App() {
       <TopBar />
 
       {/* Main Layout */}
-      <div className="flex-1 flex overflow-hidden min-h-0 px-2 gap-2 pb-2">
+      <div className="flex-1 flex overflow-hidden min-h-0 px-0 md:px-2 gap-0 md:gap-2 pb-0 md:pb-2">
         {/* Left Sidebar - Collections */}
         <div className="hidden lg:flex w-[240px] flex-shrink-0 h-full">
           <Sidebar />
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col bg-[#121212] rounded-lg overflow-hidden relative">
+        <div className="flex-1 flex flex-col bg-[#121212] rounded-none md:rounded-lg overflow-hidden relative">
           {renderContent()}
         </div>
 

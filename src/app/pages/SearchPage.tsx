@@ -90,9 +90,8 @@ export function SearchPage() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#121212] p-4 md:p-8 pb-32">
-      {/* Mobile Search Bar - Only visible on small screens */}
-      <div className="md:hidden sticky top-0 z-20 bg-[#121212] pb-4 -mx-4 px-4">
-        <h1 className="text-2xl font-bold text-white mb-4">Cari</h1>
+      {/* Mobile Search Bar - Attached to top nav */}
+      <div className="md:hidden sticky top-0 z-20 bg-[#121212] py-3 px-4 border-b border-white/5">
         <div className="relative group">
           <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#121212] transition-colors pointer-events-none">
             <Search className="w-5 h-5" strokeWidth={2.5} />
@@ -102,7 +101,7 @@ export function SearchPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Apa yang ingin kamu putar?"
-            className="w-full h-12 bg-white text-black pl-11 pr-12 rounded-lg text-sm font-bold placeholder-[#757575] outline-none"
+            className="w-full h-10 bg-white text-black pl-11 pr-12 rounded-md text-sm font-bold placeholder-[#757575] outline-none"
           />
           {searchQuery && (
             <button
