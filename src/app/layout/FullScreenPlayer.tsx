@@ -105,14 +105,20 @@ export function FullScreenPlayer({ isOpen, onClose }: FullScreenPlayerProps) {
       <div className="relative flex-1 flex flex-col h-full max-w-md mx-auto w-full justify-between py-6 px-6">
         {/* Top Header */}
         <div className="flex items-center justify-between shrink-0 mb-4">
-          <button onClick={() => window.history.back()} className="p-2 -ml-2 text-white active:scale-90 transition-transform hover:bg-white/10 rounded-full">
-            <ChevronDown className="w-8 h-8" />
+          <button 
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              onClose(); 
+            }} 
+            className="w-10 h-10 flex items-center justify-center text-white active:scale-90 transition-transform hover:bg-white/10 rounded-full"
+          >
+            <ChevronDown className="w-8 h-8" strokeWidth={2.5} />
           </button>
           <div className="flex flex-col items-center flex-1 min-w-0 px-4">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-0.5">MEMUTAR DARI KOLEKSI KAMU</span>
             <span className="text-[13px] font-bold truncate w-full text-center">Lagu yang Disukai</span>
           </div>
-          <button className="p-2 -mr-2 text-white hover:bg-white/10 rounded-full">
+          <button className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 rounded-full">
             <MoreHorizontal className="w-6 h-6" />
           </button>
         </div>
