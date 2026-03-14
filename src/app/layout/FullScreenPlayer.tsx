@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   ChevronDown, 
   MoreHorizontal, 
@@ -44,6 +44,23 @@ export function FullScreenPlayer({ isOpen, onClose }: FullScreenPlayerProps) {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
+  // Browser/Android back button support
+  useEffect(() => {
+    if (isOpen) {
+      // Push a state so pressing back will trigger popstate
+      window.history.pushState({ fullscreenPlayer: true }, '');
+      
+      const handlePopState = () => {
+        onClose();
+      };
+      
+      window.addEventListener('popstate', handlePopState);
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [isOpen, onClose]);
+
   // Swipe to close logic
   const handleTouchStart = (e: React.TouchEvent) => setTouchStart(e.targetTouches[0].clientY);
   const handleTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientY);
@@ -51,7 +68,10 @@ export function FullScreenPlayer({ isOpen, onClose }: FullScreenPlayerProps) {
     if (!touchStart || !touchEnd) return;
     const distance = touchEnd - touchStart;
     const isSwipeDown = distance > 100;
-    if (isSwipeDown) onClose();
+    if (isSwipeDown) {
+      // Go back in history instead of just calling onClose, to keep history clean
+      window.history.back();
+    }
     setTouchStart(null);
     setTouchEnd(null);
   };
@@ -85,7 +105,7 @@ export function FullScreenPlayer({ isOpen, onClose }: FullScreenPlayerProps) {
       <div className="relative flex-1 flex flex-col h-full max-w-md mx-auto w-full justify-between py-6 px-6">
         {/* Top Header */}
         <div className="flex items-center justify-between shrink-0 mb-4">
-          <button onClick={onClose} className="p-2 -ml-2 text-white active:scale-90 transition-transform hover:bg-white/10 rounded-full">
+          <button onClick={() => window.history.back()} className="p-2 -ml-2 text-white active:scale-90 transition-transform hover:bg-white/10 rounded-full">
             <ChevronDown className="w-8 h-8" />
           </button>
           <div className="flex flex-col items-center flex-1 min-w-0 px-4">

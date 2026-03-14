@@ -263,19 +263,25 @@ export function MusicPlayer() {
   // We always render the hidden player div so it stays in the DOM and doesn't detach the YouTube instance
   // but we hide the actual UI if there's no track.
   return (
-    <div className={`
-      ${currentTrack ? 'flex' : 'hidden'}
-      flex-col md:flex-row
-      bg-black md:bg-black
-      border-t border-white/5 md:border-[#121212]
-      p-2 md:px-4 h-[64px] md:h-[90px]
-      items-center justify-between select-none
-      transition-all duration-300
-      md:static fixed bottom-[64px] left-0 right-0 md:bottom-auto md:left-auto md:right-auto
-      rounded-none
-      bg-[#121212] border-t border-white/10 md:bg-black
-      z-40 shadow-[0_-4px_12px_rgba(0,0,0,0.5)]
-    `}>
+    <div 
+      className={`
+        ${currentTrack ? 'flex' : 'hidden'}
+        flex-col md:flex-row
+        bg-black md:bg-black
+        border-t border-white/5 md:border-[#121212]
+        p-2 md:px-4 h-[64px] md:h-[90px]
+        items-center justify-between select-none
+        transition-all duration-300
+        md:static fixed bottom-[64px] left-0 right-0 md:bottom-auto md:left-auto md:right-auto
+        rounded-none
+        bg-[#121212] border-t border-white/10 md:bg-black
+        z-40 shadow-[0_-4px_12px_rgba(0,0,0,0.5)]
+      `}
+      onClick={() => {
+        // Entire bar opens fullscreen on mobile
+        if (window.innerWidth < 768) setIsFullScreenOpen(true);
+      }}
+    >
       {/* Hidden Player Container - MUST ALWAYS BE PRESENT */}
       <div style={{ position: 'absolute', top: '-1000px', left: '-1000px' }}>
           <div id="youtube-player"></div>
@@ -291,9 +297,6 @@ export function MusicPlayer() {
 
       {/* Info Lagu (Kiri) */}
       <div 
-        onClick={() => {
-          if (window.innerWidth < 768) setIsFullScreenOpen(true);
-        }}
         className="flex items-center gap-3 w-full md:w-[30%] min-w-0 md:pr-2 cursor-pointer md:cursor-default"
       >
         <img src={currentTrack?.album?.images[0]?.url} alt={currentTrack?.name} className="w-10 h-10 md:w-14 md:h-14 rounded object-cover shadow-lg shrink-0" />
@@ -307,7 +310,7 @@ export function MusicPlayer() {
           </div>
         </div>
         
-        {/* Mobile controls inside info area */}
+        {/* Mobile controls inside info area - stopPropagation to prevent fullscreen */}
         <div className="flex items-center gap-2 md:hidden shrink-0 ml-auto bg-[#121212] pl-2" onClick={(e) => e.stopPropagation()}>
             <button className="text-[#b3b3b3] hover:text-[#1DB954] transition-colors p-1">
                <Laptop2 className="w-5 h-5" />
