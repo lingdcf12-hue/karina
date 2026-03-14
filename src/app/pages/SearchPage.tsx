@@ -36,13 +36,13 @@ export function SearchPage() {
 
   useEffect(() => {
     if (!searchQuery) {
-        setTracks([]);
-        setLoading(false);
-        return;
+      setTracks([]);
+      setLoading(false);
+      return;
     }
     
-    setLoading(true);
     const handler = setTimeout(() => {
+      setLoading(true);
       fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
         .then((res) => res.json())
         .then((data) => {
@@ -53,7 +53,7 @@ export function SearchPage() {
           console.error('Error fetching tracks:', err);
           setLoading(false);
         });
-    }, 500); // Tunggu 500ms setelah user berhenti mengetik
+    }, 400); // 400ms debounce
     
     return () => clearTimeout(handler);
   }, [searchQuery]);
@@ -84,9 +84,7 @@ export function SearchPage() {
     'Lagu', 'Album', 'Playlist', 'Artis', 'Podcast & Acara', 'Profil', 'Genre & Suasana'
   ];
 
-  if (loading && searchQuery) {
-    return <div className="flex-1 flex items-center justify-center text-white">Searching...</div>;
-  }
+
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#121212] md:p-8 pb-32">
@@ -103,7 +101,11 @@ export function SearchPage() {
             placeholder="Apa yang ingin kamu putar?"
             className="w-full h-12 bg-white text-black pl-11 pr-12 rounded-lg text-sm font-bold placeholder-[#757575] outline-none shadow-inner"
           />
-          {searchQuery && (
+          {loading ? (
+            <div className="absolute right-[10px] top-1/2 -translate-y-1/2 p-1">
+              <div className="w-4 h-4 border-2 border-[#121212] border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
               className="absolute right-[12px] top-1/2 -translate-y-1/2 text-[#757575] hover:text-black p-1 transition-colors"
