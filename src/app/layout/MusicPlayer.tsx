@@ -102,6 +102,27 @@ export function MusicPlayer() {
   const [isReady, setIsReady] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
+  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Hack: Putar audio native kosong agar browser tidak menyetop tab ini di background
+  useEffect(() => {
+    if (!silentAudioRef.current) {
+      // 1-sample silent WAV base64
+      const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
+      audio.loop = true;
+      silentAudioRef.current = audio;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (silentAudioRef.current) {
+      if (isPlaying) {
+        silentAudioRef.current.play().catch(() => {});
+      } else {
+        silentAudioRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
 
   // 1. Inisialisasi API YouTube
   useEffect(() => {
