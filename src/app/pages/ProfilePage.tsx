@@ -14,7 +14,7 @@ import { formatTime } from '../utils/formatters';
 import { toast } from 'sonner';
 
 export function ProfilePage() {
-  const { user, likedTracks, setCurrentTrack, setQueue, logout, setCurrentView } = useMusicStore();
+  const { user, likedTracks, setCurrentTrack, setQueue, logout, setCurrentView, updateProfile, uploadProfileImage } = useMusicStore();
   const [topTracks, setTopTracks] = useState<any[]>([]);
   const [showMenu, setShowMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -52,17 +52,35 @@ export function ProfilePage() {
     setShowMenu(false);
   };
 
-  const handleUpdateProfile = () => {
+  const handleUpdateProfile = async () => {
+    if (!newName.trim()) return;
     setIsEditing(true);
-    // Simulate API update
-    setTimeout(() => {
-      useMusicStore.setState({ 
-        user: { ...user, name: newName } 
-      });
-      setIsEditing(false);
-      setShowEditModal(false);
-      toast.success('Profil berhasil diperbaharui');
-    }, 1000);
+    await updateProfile({ name: newName });
+    setIsEditing(false);
+    setShowEditModal(false);
+    toast.success('Profil berhasil diperbaharui');
+  };
+
+  const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Ukuran file maksimal 2MB');
+      return;
+    }
+
+    setIsEditing(true);
+    const toastId = toast.loading('Mengupload foto...');
+    
+    const url = await uploadProfileImage(file);
+    if (url) {
+      await updateProfile({ avatar_url: url });
+      toast.success('Foto profil berhasil diperbaharui', { id: toastId });
+    } else {
+      toast.error('Gagal mengupload foto', { id: toastId });
+    }
+    setIsEditing(false);
   };
 
   return (
@@ -219,6 +237,12 @@ export function ProfilePage() {
                   <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                     <Camera className="w-8 h-8 text-white mb-1" />
                     <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Ganti foto</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleProfileImageChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer" 
+                    />
                   </div>
                 </div>
               </div>

@@ -19,7 +19,7 @@ import { supabase } from "./utils/supabase";
 import { Toaster, toast } from 'sonner';
 
 export default function App() {
-  const { currentView, setCurrentTrack, currentTrack, setUser, fetchCollection } = useMusicStore();
+  const { currentView, setCurrentTrack, currentTrack, setUser, fetchCollection, sidebarExpanded, rightSidebarVisible } = useMusicStore();
 
   const renderContent = () => {
     switch (currentView) {
@@ -63,7 +63,8 @@ export default function App() {
         setUser({ 
           id: session.user.id, 
           email: session.user.email,
-          name: session.user.user_metadata?.name || session.user.email?.split('@')[0]
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
+          avatar_url: session.user.user_metadata?.avatar_url || null
         });
         fetchCollection();
       }
@@ -74,7 +75,8 @@ export default function App() {
         setUser({ 
           id: session.user.id, 
           email: session.user.email,
-          name: session.user.user_metadata?.name || session.user.email?.split('@')[0]
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
+          avatar_url: session.user.user_metadata?.avatar_url || null
         });
         fetchCollection();
       } else {
@@ -99,7 +101,10 @@ export default function App() {
       {/* Main Layout */}
       <div className="flex-1 flex overflow-hidden min-h-0 px-0 md:px-2 gap-0 md:gap-2 pb-0 md:pb-2">
         {/* Left Sidebar - Collections */}
-        <div className="hidden lg:flex w-[240px] flex-shrink-0 h-full">
+        <div 
+          className="hidden lg:flex flex-shrink-0 h-full transition-all duration-300 ease-in-out"
+          style={{ width: sidebarExpanded ? '420px' : '240px' }}
+        >
           <Sidebar />
         </div>
 
@@ -108,10 +113,12 @@ export default function App() {
           {renderContent()}
         </div>
 
-        {/* Right Sidebar - Track Details (Always visible to maintain layout) */}
-        <div className="hidden xl:flex w-[300px] flex-shrink-0 h-full">
-          <RightSidebar />
-        </div>
+        {/* Right Sidebar - Track Details */}
+        {rightSidebarVisible && (
+          <div className="hidden xl:flex w-[300px] flex-shrink-0 h-full animate-in slide-in-from-right duration-300">
+            <RightSidebar />
+          </div>
+        )}
       </div>
 
       {/* Music Player - Fixed Bottom */}

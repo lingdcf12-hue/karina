@@ -3,7 +3,7 @@ import { Track, Playlist } from '../types/music';
 // Mock Data - Simulating Spotify API Response
 export const mockTracks: Track[] = [
   {
-    id: 's1',
+    id: 'Dbv3JNfF2Bg',
     name: 'Say Yes To Heaven',
     artists: [{ id: 'ldr1', name: 'Lana Del Rey' }],
     album: {
@@ -25,7 +25,7 @@ export const mockTracks: Track[] = [
     popularity: 98,
   },
   {
-    id: '1',
+    id: '4NRXx6U8ABQ',
     name: 'Blinding Lights',
     artists: [{ id: 'a1', name: 'The Weeknd' }],
     album: {
@@ -47,7 +47,7 @@ export const mockTracks: Track[] = [
     popularity: 95,
   },
   {
-    id: '2',
+    id: '34Na4j8AVgA',
     name: 'Starboy',
     artists: [
       { id: 'a1', name: 'The Weeknd' },
@@ -72,7 +72,7 @@ export const mockTracks: Track[] = [
     popularity: 92,
   },
   {
-    id: '3',
+    id: 'f6K5_W7vT8Q',
     name: 'Levitating',
     artists: [{ id: 'a3', name: 'Dua Lipa' }],
     album: {

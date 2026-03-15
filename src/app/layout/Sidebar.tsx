@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Plus, Search, List, Music, FolderOpen,
   Trash2, Edit3, Share2, Pin, Globe, UserPlus, XCircle, ChevronRight, ListPlus,
-  Check, Menu, LayoutGrid, Grid2X2, Maximize2
+  Check, Menu, LayoutGrid, Grid2X2, Maximize2, Minimize2
 } from 'lucide-react';
 import { mockPlaylists, mockTracks } from '../data/mockData';
 import { useMusicStore } from '../store/musicStore';
@@ -60,6 +60,7 @@ export function Sidebar() {
     collection, setCollection, addFolder, addPlaylist,
     setSelectedId, togglePinPlaylist, removeCollectionItem,
     likedTracks, setCurrentView, user, currentView, selectedId, currentTrack,
+    sidebarExpanded, setSidebarExpanded
   } = useMusicStore();
 
   const [editingPlaylistId, setEditingPlaylistId] = useState<string | null>(null);
@@ -164,7 +165,7 @@ export function Sidebar() {
 
   return (
     <div className="w-full h-full flex flex-col relative">
-      <div className="bg-[#121212] rounded-lg flex-1 overflow-hidden flex flex-col">
+      <div className="bg-[#121212] rounded-lg flex-1 flex flex-col">
 
         {/* ══════════════════════════════════════════
             HEADER: Koleksi Kamu
@@ -187,7 +188,7 @@ export function Sidebar() {
               </button>
 
               {isMenuOpen && (
-                <div className="absolute top-10 right-0 w-[220px] bg-[#282828] shadow-[0_8px_24px_rgba(0,0,0,0.6)] rounded-md p-1 z-50 border border-[#3e3e3e] flex flex-col gap-0.5">
+                <div className="absolute top-10 right-0 w-[220px] bg-[#282828] shadow-[0_12px_32px_rgba(0,0,0,0.8)] rounded-md p-1 z-[100] border border-white/10 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-150">
                   <button onClick={user ? handleAddPlaylist : () => setCurrentView('register')}
                     className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#3e3e3e] transition-colors rounded-sm text-left group">
                     <div className="w-9 h-9 rounded-full bg-[#333] flex items-center justify-center text-[#b3b3b3] group-hover:text-white flex-shrink-0">
@@ -215,10 +216,17 @@ export function Sidebar() {
 
             {/* Expand icon */}
             <button
-              title="Perluas"
-              className="flex items-center justify-center w-8 h-8 rounded-full text-[#b3b3b3] hover:text-white hover:bg-[#1f1f1f] transition-all"
+              onClick={() => setSidebarExpanded(!sidebarExpanded)}
+              title={sidebarExpanded ? "Perkecil" : "Perluas"}
+              className={`flex items-center justify-center w-8 h-8 rounded-full transition-all ${
+                sidebarExpanded ? 'text-white bg-[#1f1f1f]' : 'text-[#b3b3b3] hover:text-white hover:bg-[#1f1f1f]'
+              }`}
             >
-              <Maximize2 className="w-[18px] h-[18px]" />
+              {sidebarExpanded ? (
+                <Minimize2 className="w-[18px] h-[18px]" />
+              ) : (
+                <Maximize2 className="w-[18px] h-[18px]" />
+              )}
             </button>
           </div>
         </div>
@@ -310,7 +318,8 @@ export function Sidebar() {
                     </button>
 
                     {isSortMenuOpen && (
-                      <div className="absolute top-8 right-0 w-[240px] bg-[#282828] shadow-[0_8px_24px_rgba(0,0,0,0.7)] rounded-md py-4 z-50 border border-[#3e3e3e] flex flex-col">
+                      <div className="absolute top-8 right-0 w-[240px] bg-[#282828] shadow-[0_12px_32px_rgba(0,0,0,0.8)] rounded-md py-2 z-[100] border border-white/10 flex flex-col animate-in fade-in zoom-in-95 duration-150">
+                        <div className="py-2 flex flex-col">
                         <p className="text-[#b3b3b3] text-[10px] font-bold uppercase tracking-wider px-4 mb-2">Urutkan menurut</p>
                         {sortOptions.map(opt => (
                           <button key={opt} onClick={() => { setSortBy(opt); setIsSortMenuOpen(false); }}
@@ -328,6 +337,7 @@ export function Sidebar() {
                               {v.icon}
                             </button>
                           ))}
+                        </div>
                         </div>
                       </div>
                     )}

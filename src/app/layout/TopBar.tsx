@@ -19,11 +19,15 @@ export function TopBar() {
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="w-8 h-8 rounded-full overflow-hidden bg-[#535353] border border-white/10"
             >
-              <img
-                src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name || user.email}&backgroundColor=535353&textColor=ffffff`}
-                alt="Avatar"
-                className="w-full h-full object-cover"
-              />
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <img
+                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name || user.email}&backgroundColor=535353&textColor=ffffff`}
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                />
+              )}
             </button>
             {isMenuOpen && (
               <>
@@ -37,6 +41,15 @@ export function TopBar() {
                     <p className="text-[#a7a7a7] text-xs truncate">{user.email}</p>
                   </div>
                   <button
+                    onClick={() => {
+                       setIsMenuOpen(false);
+                       setCurrentView('profile');
+                    }}
+                    className="w-full text-left px-4 py-3 text-[13px] font-medium text-[#e8e8e8] hover:bg-[#3e3e3e] hover:text-white transition-colors"
+                  >
+                    Profil
+                  </button>
+                  <button
                     onClick={async () => {
                       setIsMenuOpen(false);
                       await supabase.auth.signOut();
@@ -44,7 +57,7 @@ export function TopBar() {
                       setCurrentView('home');
                       toast.success('Kamu telah berhasil keluar.');
                     }}
-                    className="w-full text-left px-4 py-3 text-[13px] font-medium text-[#e8e8e8] hover:bg-[#3e3e3e] hover:text-white transition-colors"
+                    className="w-full text-left px-4 py-3 text-[13px] font-medium text-[#e8e8e8] hover:bg-[#3e3e3e] hover:text-white transition-colors border-t border-[#3e3e3e]"
                   >
                     Keluar
                   </button>
@@ -172,11 +185,15 @@ export function TopBar() {
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="w-8 h-8 rounded-full overflow-hidden hover:scale-105 transition-all ring-2 ring-transparent hover:ring-white/30 bg-[#535353]"
               >
-                <img
-                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name || user.email}&backgroundColor=535353&textColor=ffffff`}
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                />
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <img
+                    src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name || user.email}&backgroundColor=535353&textColor=ffffff`}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </button>
               {isMenuOpen && (
                 <>
@@ -190,6 +207,15 @@ export function TopBar() {
                       <p className="text-[#a7a7a7] text-xs truncate">{user.email}</p>
                     </div>
                     <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        setCurrentView('profile');
+                      }}
+                      className="w-full text-left px-4 py-3 text-[13px] font-medium text-[#e8e8e8] hover:bg-[#3e3e3e] hover:text-white transition-colors"
+                    >
+                      Profil
+                    </button>
+                    <button
                       onClick={async () => {
                         setIsMenuOpen(false);
                         await supabase.auth.signOut();
@@ -197,7 +223,7 @@ export function TopBar() {
                         setCurrentView('home');
                         toast.success('Kamu telah berhasil keluar.');
                       }}
-                      className="w-full text-left px-4 py-3 text-[13px] font-medium text-[#e8e8e8] hover:bg-[#3e3e3e] hover:text-white transition-colors"
+                      className="w-full text-left px-4 py-3 text-[13px] font-medium text-[#e8e8e8] hover:bg-[#3e3e3e] hover:text-white transition-colors border-t border-[#3e3e3e]"
                     >
                       Keluar
                     </button>

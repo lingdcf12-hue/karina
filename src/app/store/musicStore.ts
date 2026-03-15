@@ -22,6 +22,9 @@ interface MusicStore extends PlayerState {
   updatePlaylist: (id: string, updates: { name?: string; description?: string; image_url?: string }) => Promise<void>;
   uploadPlaylistImage: (playlistId: string, file: File) => Promise<string | null>;
   togglePinPlaylist: (id: string) => Promise<void>;
+  // Profile
+  updateProfile: (updates: { name?: string; avatar_url?: string }) => Promise<void>;
+  uploadProfileImage: (file: File) => Promise<string | null>;
   // Spotify Specific
   likedTracks: Track[]; // full track objects
   toggleLike: (track: Track) => void;
@@ -51,6 +54,11 @@ interface MusicStore extends PlayerState {
   setQueue: (tracks: Track[]) => void;
   clearQueue: () => void;
   setDuration: (duration: number) => void;
+  // Layout
+  sidebarExpanded: boolean;
+  setSidebarExpanded: (expanded: boolean) => void;
+  rightSidebarVisible: boolean;
+  setRightSidebarVisible: (visible: boolean) => void;
 }
 
 export const useMusicStore = create<MusicStore>()(
@@ -74,6 +82,8 @@ export const useMusicStore = create<MusicStore>()(
       likedTracks: [],
       dominantColor: '#121212',
       isFavPinned: false,
+      sidebarExpanded: false,
+      rightSidebarVisible: true,
 
       // Actions
       setUser: (user) => set({ user }),
@@ -379,6 +389,59 @@ export const useMusicStore = create<MusicStore>()(
 
       setDominantColor: (color) => set({ dominantColor: color }),
 
+      updateProfile: async (updates) => {
+        const currentUser = get().user;
+        if (!currentUser) return;
+
+        const { data, error } = await supabase.auth.updateUser({
+          data: { 
+            name: updates.name || currentUser.name,
+            avatar_url: updates.avatar_url || currentUser.avatar_url
+          }
+        });
+
+        if (error) {
+          toast.error("Gagal update profil: " + error.message);
+          return;
+        }
+
+        set((state) => ({
+          user: { 
+            ...state.user, 
+            name: updates.name || state.user.name,
+            avatar_url: updates.avatar_url || state.user.avatar_url
+          }
+        }));
+      },
+
+      uploadProfileImage: async (file) => {
+        const currentUser = get().user;
+        if (!currentUser) return null;
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        const { error } = await supabase.storage
+          .from('profiles')
+          .upload(filePath, file);
+
+        if (error) {
+          if (error.message.includes("bucket not found")) {
+            toast.error("Bucket 'profiles' belum dibuat di Supabase.");
+          } else {
+            toast.error("Gagal upload foto: " + error.message);
+          }
+          return null;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('profiles')
+          .getPublicUrl(filePath);
+
+        return publicUrl;
+      },
+
       setCurrentTrack: (track) => {
         if (!get().user && get().currentTrack) {
           // If they are guest and try to play a track (other than initial hydration), prompt them
@@ -481,6 +544,9 @@ export const useMusicStore = create<MusicStore>()(
 
       clearQueue: () => set({ queue: [] }),
       setDuration: (duration) => set({ duration }),
+
+      setSidebarExpanded: (sidebarExpanded) => set({ sidebarExpanded }),
+      setRightSidebarVisible: (rightSidebarVisible) => set({ rightSidebarVisible }),
     }),
     {
       name: 'spotify-music-store',

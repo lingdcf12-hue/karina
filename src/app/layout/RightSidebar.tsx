@@ -51,7 +51,7 @@ function MarqueeText({ text, className = '' }: MarqueeTextProps) {
 
 /* ── RightSidebar ─────────────────────────────────────────────── */
 export function RightSidebar() {
-  const { currentTrack, toggleLike, likedTracks } = useMusicStore();
+  const { currentTrack, toggleLike, likedTracks, setRightSidebarVisible } = useMusicStore();
 
   const isLiked = currentTrack ? likedTracks.find(t => t.id === currentTrack.id) : false;
 
@@ -104,7 +104,10 @@ export function RightSidebar() {
           <button className="text-[#b3b3b3] hover:text-white transition-colors hover:scale-105 p-1">
             <MoreHorizontal className="w-5 h-5" />
           </button>
-          <button className="text-[#b3b3b3] hover:text-white transition-colors hover:scale-105 p-1 rounded-full bg-black/20 hover:bg-black/40">
+          <button 
+            onClick={() => setRightSidebarVisible(false)}
+            className="text-[#b3b3b3] hover:text-white transition-colors hover:scale-105 p-1 rounded-full bg-black/20 hover:bg-black/40"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
