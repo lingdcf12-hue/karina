@@ -450,14 +450,14 @@ export const useMusicStore = create<MusicStore>()(
         const currentUser = state.user;
         if (!currentUser) return;
 
-        // Sanitasi: Pastikan tidak menyimpan Blob URL ke database
+        // Sanitasi: Pastikan tidak menyimpan Blob URL
         const cleanUpdates = { ...updates };
         if (cleanUpdates.avatar_url?.startsWith('blob:')) {
-            console.warn("⚠️ [UpdateProfile] Menolak menyimpan Blob URL, mencari aslinya...");
             delete cleanUpdates.avatar_url;
         }
 
-        // 1. Optimistic Update (Respons langsung di UI)
+        // 🚀 1. INSTAN (ZERO-WAIT): Update UI detik ini juga tanpa ba-bi-bu!
+        // User langsung lihat perubahan di layar.
         set((state) => ({
           user: state.user ? {
             ...state.user,
@@ -466,49 +466,40 @@ export const useMusicStore = create<MusicStore>()(
           } : null
         }));
 
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) return;
+        // 🚀 2. BACKGROUND SYNC (TANPA AWAIT): Kirim ke database di jalur belakang.
+        // Kita tidak pake 'await' di sini supaya tombol simpan langsung kelar.
+        (async () => {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
 
-          const userId = session.user.id;
-          
-          // Data untuk Auth (Metadata)
-          const authData: any = {};
-          if ('name' in cleanUpdates) {
-            authData.name = cleanUpdates.name;
-            authData.full_name = cleanUpdates.name;
+            const userId = session.user.id;
+            
+            const dbData: any = { 
+              id: userId, 
+              updated_at: new Date().toISOString() 
+            };
+            if ('name' in cleanUpdates) dbData.full_name = cleanUpdates.name;
+            if ('avatar_url' in cleanUpdates) dbData.avatar_url = cleanUpdates.avatar_url;
+
+            console.log("📡 [Background] Sinkronasi ke DB dimulai...");
+            
+            // Proses kirim ke Supabase (Tabel & Auth)
+            await Promise.all([
+              supabase.from('profiles').upsert(dbData, { onConflict: 'id' }),
+              supabase.auth.updateUser({ 
+                data: {
+                  full_name: cleanUpdates.name || currentUser.name,
+                  avatar_url: cleanUpdates.avatar_url || currentUser.avatar_url
+                } 
+              })
+            ]);
+
+            console.log("✅ [Background] Data aman di Supabase.");
+          } catch (error: any) {
+            console.error("❌ [Background Error]:", error.message);
           }
-          if ('avatar_url' in cleanUpdates) authData.avatar_url = cleanUpdates.avatar_url;
-
-          // Data untuk Tabel Database (Profiles)
-          const dbData: any = { 
-            id: userId, 
-            updated_at: new Date().toISOString() 
-          };
-          if ('name' in cleanUpdates) dbData.full_name = cleanUpdates.name;
-          if ('avatar_url' in cleanUpdates) dbData.avatar_url = cleanUpdates.avatar_url;
-
-          console.log("⚡ [FastSync] Mengirim data valid ke Supabase...", dbData);
-
-          // JALANKAN SERENTAK
-          const [authResult, dbResult] = await Promise.all([
-            supabase.auth.updateUser({ data: authData }),
-            supabase.from('profiles').upsert(dbData, { onConflict: 'id' }).select()
-          ]);
-
-          if (authResult.error) throw authResult.error;
-          if (dbResult.error) throw dbResult.error;
-
-          console.log("✅ [FastSync] Sinkronasi Berhasil.");
-          
-          // 2. FORCE SYNC: Tarik data terbaru untuk memastikan persistensi
-          await get().syncProfile();
-
-        } catch (error: any) {
-          console.error("❌ [FastSync] Error Krusial:", error.message);
-          toast.error("Gagal sinkronasi ke database: " + error.message);
-          throw error;
-        }
+        })();
       },
 
       uploadProfileImage: async (file) => {
