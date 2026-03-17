@@ -503,26 +503,31 @@ export const useMusicStore = create<MusicStore>()(
 
       uploadProfileImage: async (file) => {
         const currentUser = get().user;
-        if (!currentUser) return null;
+        if (!currentUser) {
+          console.error("❌ [Upload] User not found in store");
+          return null;
+        }
 
-        const fileExt = file.name.split('.').pop();
+        // Sanitasi nama file
+        const fileExt = file.name.split('.').pop() || 'jpg';
         const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`;
+        
+        // Coba upload langsung ke root bucket 'profiles' atau folder 'avatars'
+        // Kita gunakan folder 'avatars/' agar rapi sesuai screenshot kamu
         const filePath = `avatars/${fileName}`;
 
-        console.log("📂 Memulai upload ke profiles/avatars...", filePath);
+        console.log("📂 [Upload] Memulai upload ke profiles/avatars...", filePath);
 
-        // Upload ke Storage dengan ContentType eksplisit
-        const { error: uploadError } = await supabase.storage
+        const { data, error: uploadError } = await supabase.storage
           .from('profiles')
           .upload(filePath, file, {
             cacheControl: '3600',
-            contentType: 'image/jpeg', // Paksa JPEG karena hasil kompresi kita JPEG
-            upsert: false // Pakai false saja karena nama file sudah unik (biar gak bentrok izin UPDATE)
+            contentType: file.type || 'image/jpeg',
+            upsert: true
           });
 
         if (uploadError) {
-          console.error("❌ Storage Error Detail:", uploadError);
-          // Return error message agar bisa ditampilkan di UI
+          console.error("❌ [Upload] Storage Error:", uploadError);
           throw new Error(uploadError.message);
         }
 
@@ -531,7 +536,7 @@ export const useMusicStore = create<MusicStore>()(
           .from('profiles')
           .getPublicUrl(filePath);
 
-        console.log("✅ Upload Berhasil. URL:", publicUrl);
+        console.log("✅ [Upload] Berhasil. URL:", publicUrl);
         return publicUrl;
       },
 
