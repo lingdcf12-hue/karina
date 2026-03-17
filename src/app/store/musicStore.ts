@@ -391,7 +391,6 @@ export const useMusicStore = create<MusicStore>()(
       setDominantColor: (color) => set({ dominantColor: color }),
 
       syncProfile: async () => {
-        // Ambil user terbaru langsung dari auth session
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
         
         if (authError || !authUser) {
@@ -399,39 +398,20 @@ export const useMusicStore = create<MusicStore>()(
           return;
         }
 
-        // Ambil data dari tabel profiles
+        // 1. TARIK DARI DATABASE (Sumber paling valid)
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', authUser.id)
           .maybeSingle();
 
-        if (profileError) {
-          console.warn("⚠️ [Supabase] Database profiles belum terbaca.", profileError.message);
-        } else {
-          console.log("✅ [Supabase] Terhubung ke Database Profiles.");
-        }
-
         const authMetadata = authUser.user_metadata || {};
         
-        // Prioritas data: Database (Profiles) -> Auth Metadata -> Email
+        // LOGIKA BARU: Jika DB ada isi avatar, PAKSA pakai itu. Lupakan Google.
         const finalName = profile?.full_name || authMetadata.full_name || authMetadata.name || authUser.email?.split('@')[0];
         const finalAvatar = profile?.avatar_url || authMetadata.avatar_url || null;
 
-        // AUTO-REPAIR: Jika di DB kosong/NULL tapi di Metadata ada isinya, kita sinkronkan sekarang juga!
-        const needsRepair = !profile || (authMetadata.full_name && !profile.full_name) || (authMetadata.avatar_url && !profile.avatar_url);
-
-        if (needsRepair) {
-          console.log("🛠️ [Sync] Mendeteksi data kosong/NULL, melakukan Auto-Repair ke tabel profiles...");
-          await supabase.from('profiles').upsert({
-            id: authUser.id,
-            full_name: finalName,
-            avatar_url: finalAvatar,
-            updated_at: new Date().toISOString()
-          });
-        }
-
-        console.log("👤 [User] Profile loaded:", { finalName, hasAvatar: !!finalAvatar });
+        console.log("🔄 [Sync] Profil dimuat:", { finalName, source: profile ? 'Database' : 'Auth/Google' });
 
         set({ 
           user: { 
@@ -441,6 +421,17 @@ export const useMusicStore = create<MusicStore>()(
             avatar_url: finalAvatar
           } 
         });
+
+        // 2. AUTO-REPAIR (Hanya jika DB benar-benar kosong)
+        if (!profile && authMetadata.full_name) {
+          console.log("🛠️ [Sync] Baris DB kosong, menginisialisasi dari Auth...");
+          await supabase.from('profiles').upsert({
+            id: authUser.id,
+            full_name: finalName,
+            avatar_url: finalAvatar,
+            updated_at: new Date().toISOString()
+          });
+        }
         
         get().fetchCollection();
       },
@@ -450,14 +441,14 @@ export const useMusicStore = create<MusicStore>()(
         const currentUser = state.user;
         if (!currentUser) return;
 
-        // Sanitasi: Pastikan tidak menyimpan Blob URL
+        // 1. Sanitasi URL (Jangan biarkan Blob masuk)
         const cleanUpdates = { ...updates };
         if (cleanUpdates.avatar_url?.startsWith('blob:')) {
+            console.warn("⚠️ [Update] Menemukan Blob URL, mengabaikan...");
             delete cleanUpdates.avatar_url;
         }
 
-        // 🚀 1. INSTAN (ZERO-WAIT): Update UI detik ini juga tanpa ba-bi-bu!
-        // User langsung lihat perubahan di layar.
+        // 2. Optimistic Update (Respons instan di UI)
         set((state) => ({
           user: state.user ? {
             ...state.user,
@@ -466,40 +457,44 @@ export const useMusicStore = create<MusicStore>()(
           } : null
         }));
 
-        // 🚀 2. BACKGROUND SYNC (TANPA AWAIT): Kirim ke database di jalur belakang.
-        // Kita tidak pake 'await' di sini supaya tombol simpan langsung kelar.
-        (async () => {
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) return;
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) return;
 
-            const userId = session.user.id;
-            
-            const dbData: any = { 
-              id: userId, 
-              updated_at: new Date().toISOString() 
-            };
-            if ('name' in cleanUpdates) dbData.full_name = cleanUpdates.name;
-            if ('avatar_url' in cleanUpdates) dbData.avatar_url = cleanUpdates.avatar_url;
+          const userId = session.user.id;
+          
+          // A. Siapkan data untuk Tabel Database (Profiles)
+          const dbData: any = { 
+            id: userId, 
+            updated_at: new Date().toISOString() 
+          };
+          if ('name' in cleanUpdates) dbData.full_name = cleanUpdates.name;
+          if ('avatar_url' in cleanUpdates) dbData.avatar_url = cleanUpdates.avatar_url;
 
-            console.log("📡 [Background] Sinkronasi ke DB dimulai...");
-            
-            // Proses kirim ke Supabase (Tabel & Auth)
-            await Promise.all([
-              supabase.from('profiles').upsert(dbData, { onConflict: 'id' }),
-              supabase.auth.updateUser({ 
-                data: {
-                  full_name: cleanUpdates.name || currentUser.name,
-                  avatar_url: cleanUpdates.avatar_url || currentUser.avatar_url
-                } 
-              })
-            ]);
+          console.log("📡 [Sync] Mengirim data permanen ke Supabase...", dbData);
+          
+          // B. UPDATE DATABASE DULU (Wajib ditunggu/await)
+          const { error: dbError } = await supabase
+            .from('profiles')
+            .upsert(dbData, { onConflict: 'id' });
 
-            console.log("✅ [Background] Data aman di Supabase.");
-          } catch (error: any) {
-            console.error("❌ [Background Error]:", error.message);
-          }
-        })();
+          if (dbError) throw new Error("Gagal simpan ke Tabel Profiles: " + dbError.message);
+
+          // C. UPDATE AUTH METADATA (Juga ditunggu)
+          const { error: authError } = await supabase.auth.updateUser({ 
+            data: {
+              full_name: cleanUpdates.name || currentUser.name,
+              avatar_url: cleanUpdates.avatar_url || currentUser.avatar_url
+            } 
+          });
+
+          if (authError) console.warn("⚠️ [Sync] Auth Update telat, tapi DB aman.");
+
+          console.log("✅ [Sync] Data BERHASIL disimpan di Database & Auth.");
+        } catch (error: any) {
+          console.error("❌ [Sync] ERROR KRUSIAL:", error.message);
+          toast.error("Gagal permanen: " + error.message);
+        }
       },
 
       uploadProfileImage: async (file) => {
