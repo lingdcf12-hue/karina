@@ -449,7 +449,7 @@ export const useMusicStore = create<MusicStore>()(
         const currentUser = state.user;
         if (!currentUser) return;
 
-        // 1. KILAT: Update LOCAL state langsung (Optimistic)
+        // 1. Optimistic Update (Respons langsung di UI)
         set((state) => ({
           user: state.user ? {
             ...state.user,
@@ -458,24 +458,21 @@ export const useMusicStore = create<MusicStore>()(
           } : null
         }));
 
-        // 2. PARALEL: Update Auth & DB secara bersamaan (Biar gak antre)
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (!session) return;
 
           const userId = session.user.id;
           
-          // Siapkan data untuk Auth
+          // Data untuk Auth (Metadata)
           const authData: any = {};
           if ('name' in updates) {
             authData.name = updates.name;
             authData.full_name = updates.name;
           }
-          if ('avatar_url' in updates) {
-            authData.avatar_url = updates.avatar_url;
-          }
+          if ('avatar_url' in updates) authData.avatar_url = updates.avatar_url;
 
-          // Siapkan data untuk Database
+          // Data untuk Tabel Database
           const dbData: any = { 
             id: userId, 
             updated_at: new Date().toISOString() 
@@ -483,20 +480,28 @@ export const useMusicStore = create<MusicStore>()(
           if ('name' in updates) dbData.full_name = updates.name;
           if ('avatar_url' in updates) dbData.avatar_url = updates.avatar_url;
 
-          // JALANKAN SERENTAK (Parallel Execution)
-          console.log("⚡ [FastSync] Memperbarui Metadata & Database...");
+          console.log("⚡ [FastSync] Mengirim data ke Supabase...", { hasName: !!dbData.full_name, hasAvatar: !!dbData.avatar_url });
+
+          // JALANKAN SERENTAK
           const [authResult, dbResult] = await Promise.all([
             supabase.auth.updateUser({ data: authData }),
-            supabase.from('profiles').upsert(dbData, { onConflict: 'id' })
+            supabase.from('profiles').upsert(dbData, { onConflict: 'id' }).select()
           ]);
 
           if (authResult.error) throw authResult.error;
-          if (dbResult.error) console.warn("⚠️ DB Upsert Slow/Error:", dbResult.error.message);
+          if (dbResult.error) {
+             console.error("❌ [DB Error] Gagal update tabel profiles:", dbResult.error.message);
+             // Jika tabel gagal, kita tetap lanjut karena metadata sudah masuk
+          }
 
-          console.log("✅ [FastSync] Berhasil disimpan secara paralel");
+          console.log("✅ [FastSync] Sinkronasi Berhasil.");
+          
+          // 2. FORCE SYNC: Tarik data terbaru dari server untuk memastikan presisi 100%
+          await get().syncProfile();
+
         } catch (error: any) {
-          console.error("❌ [FastSync] Gagal:", error.message);
-          toast.error("Gagal sinkronasi permanen: " + error.message);
+          console.error("❌ [FastSync] Error Krusial:", error.message);
+          toast.error("Gagal sinkronasi ke database: " + error.message);
           throw error;
         }
       },
