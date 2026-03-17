@@ -119,26 +119,17 @@ export function ProfilePage() {
   const [localPreview, setLocalPreview] = useState<string | null>(null);
 
   // State untuk menyimpan URL terbaru dari server
-  const handleUpdateProfile = async () => {
+  const handleUpdateProfile = () => {
     if (!newName.trim()) return;
     
-    setIsEditing(true);
+    console.log("🚀 [Instant] Menutup modal & Simpan di background...");
+    
+    // 1. TUTUP MODAL DETIK INI JUGA!
+    setShowEditModal(false);
+    toast.success('Profil sedang diperbaharui...');
 
-    try {
-      console.log("🚀 [Instant] Menyimpan nama...");
-      
-      // Update nama saja secara instan
-      await updateProfile({ name: newName });
-      
-      // Tutup modal detik ini juga!
-      setShowEditModal(false);
-      toast.success('Nama berhasil diperbaharui!');
-    } catch (error: any) {
-      console.error("❌ [Instant] Gagal:", error.message);
-      toast.error('Gagal simpan: ' + error.message);
-    } finally {
-      setIsEditing(false);
-    }
+    // 2. Jalankan simpan di background (Gak usah di-await biar UI gak beku)
+    updateProfile({ name: newName });
   };
 
   const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -341,6 +332,7 @@ export function ProfilePage() {
 
           <DialogHeader className="mb-4 text-left">
             <DialogTitle className="text-2xl font-bold">Edit detail profil</DialogTitle>
+            <div className="sr-only">Ubah nama dan foto profil kamu agar terlihat keren di publik.</div>
           </DialogHeader>
 
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
