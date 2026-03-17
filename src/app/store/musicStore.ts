@@ -533,7 +533,7 @@ export const useMusicStore = create<MusicStore>()(
           .upload(filePath, file, {
             cacheControl: '3600',
             contentType: file.type || 'image/jpeg',
-            upsert: true
+            upsert: false // False karena nama file sudah unik (Date.now()), biar makin cepet
           });
 
         if (uploadError) {

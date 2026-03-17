@@ -78,7 +78,7 @@ export function ProfilePage() {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_SIZE = 400; // Ukuran pas untuk profil (Spotify style)
+          const MAX_SIZE = 250; // Lebih kecil = Lebih Kilat
           let width = img.width;
           let height = img.height;
 
@@ -109,7 +109,7 @@ export function ProfilePage() {
             } else {
               resolve(file); // Fallback ke file asli jika gagal
             }
-          }, 'image/jpeg', 0.8); // Kualitas 80% (Bagus & Sangat Ringan)
+          }, 'image/jpeg', 0.5); // 0.5 = Super Ringan & Kilat
         };
       };
     });
