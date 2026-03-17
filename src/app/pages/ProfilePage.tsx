@@ -189,7 +189,7 @@ export function ProfilePage() {
       }
     } catch (err: any) {
       console.error("❌ [Upload] Gagal:", err.message);
-      toast.error("Gagal mengirim foto ke storage.");
+      toast.error(`Gagal upload: ${err.message || 'Cek koneksi/Storage'}`);
       setLocalPreview(null);
     } finally {
       setIsUploading(false);
