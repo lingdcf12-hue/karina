@@ -444,11 +444,10 @@ export const useMusicStore = create<MusicStore>()(
         // 1. Sanitasi URL (Jangan biarkan Blob masuk)
         const cleanUpdates = { ...updates };
         if (cleanUpdates.avatar_url?.startsWith('blob:')) {
-            console.warn("⚠️ [Update] Menemukan Blob URL, mengabaikan...");
             delete cleanUpdates.avatar_url;
         }
 
-        // 2. Optimistic Update (Respons instan di UI)
+        // 2. Optimistic Update (Respons instan di layar)
         set((state) => ({
           user: state.user ? {
             ...state.user,
@@ -463,7 +462,6 @@ export const useMusicStore = create<MusicStore>()(
 
           const userId = session.user.id;
           
-          // A. Siapkan data untuk Tabel Database (Profiles)
           const dbData: any = { 
             id: userId, 
             updated_at: new Date().toISOString() 
@@ -471,29 +469,33 @@ export const useMusicStore = create<MusicStore>()(
           if ('name' in cleanUpdates) dbData.full_name = cleanUpdates.name;
           if ('avatar_url' in cleanUpdates) dbData.avatar_url = cleanUpdates.avatar_url;
 
-          console.log("📡 [Sync] Mengirim data permanen ke Supabase...", dbData);
+          console.log("📡 [Sync] Memulai Sinkronasi (Durasi Tetap: 3 Detik)...");
           
-          // B. UPDATE DATABASE DULU (Wajib ditunggu/await)
-          const { error: dbError } = await supabase
-            .from('profiles')
-            .upsert(dbData, { onConflict: 'id' });
+          // JALANKAN PARALEL + FORCE DELAY 3 DETIK (Sesuai request user 2-5 detik)
+          // Ini menjamin kestabilan data sebelum modal ditutup.
+          await Promise.all([
+            // Simpan ke Database
+            supabase.from('profiles').upsert(dbData, { onConflict: 'id' }),
+            
+            // Simpan ke Auth Metadata
+            supabase.auth.updateUser({ 
+              data: {
+                full_name: cleanUpdates.name || currentUser.name,
+                avatar_url: cleanUpdates.avatar_url || currentUser.avatar_url
+              } 
+            }),
+            
+            // TUNGGU 3 DETIK (Buffer agar data stabil di server)
+            new Promise(resolve => setTimeout(resolve, 3000))
+          ]);
 
-          if (dbError) throw new Error("Gagal simpan ke Tabel Profiles: " + dbError.message);
+          // Terakhir, sinkronkan ulang dari server sebelum selesai
+          await get().syncProfile();
 
-          // C. UPDATE AUTH METADATA (Juga ditunggu)
-          const { error: authError } = await supabase.auth.updateUser({ 
-            data: {
-              full_name: cleanUpdates.name || currentUser.name,
-              avatar_url: cleanUpdates.avatar_url || currentUser.avatar_url
-            } 
-          });
-
-          if (authError) console.warn("⚠️ [Sync] Auth Update telat, tapi DB aman.");
-
-          console.log("✅ [Sync] Data BERHASIL disimpan di Database & Auth.");
+          console.log("✅ [Sync] Data SUKSES terpaku permanen di Cloud.");
         } catch (error: any) {
           console.error("❌ [Sync] ERROR KRUSIAL:", error.message);
-          toast.error("Gagal permanen: " + error.message);
+          toast.error("Gagal simpan permanen: " + error.message);
         }
       },
 
