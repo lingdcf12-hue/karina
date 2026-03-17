@@ -441,13 +441,13 @@ export const useMusicStore = create<MusicStore>()(
         const currentUser = state.user;
         if (!currentUser) return;
 
-        // 1. Sanitasi URL (Jangan biarkan Blob masuk)
+        // 1. Sanitasi URL
         const cleanUpdates = { ...updates };
         if (cleanUpdates.avatar_url?.startsWith('blob:')) {
             delete cleanUpdates.avatar_url;
         }
 
-        // 2. Optimistic Update (Respons instan di layar)
+        // 2. INSTAN: Update di layar detik ini juga!
         set((state) => ({
           user: state.user ? {
             ...state.user,
@@ -469,33 +469,29 @@ export const useMusicStore = create<MusicStore>()(
           if ('name' in cleanUpdates) dbData.full_name = cleanUpdates.name;
           if ('avatar_url' in cleanUpdates) dbData.avatar_url = cleanUpdates.avatar_url;
 
-          console.log("📡 [Sync] Memulai Sinkronasi (Durasi Tetap: 3 Detik)...");
+          console.log("⚡ [TurboSync] Menembak data ke Supabase...");
           
-          // JALANKAN PARALEL + FORCE DELAY 3 DETIK (Sesuai request user 2-5 detik)
-          // Ini menjamin kestabilan data sebelum modal ditutup.
-          await Promise.all([
-            // Simpan ke Database
-            supabase.from('profiles').upsert(dbData, { onConflict: 'id' }),
-            
-            // Simpan ke Auth Metadata
-            supabase.auth.updateUser({ 
-              data: {
-                full_name: cleanUpdates.name || currentUser.name,
-                avatar_url: cleanUpdates.avatar_url || currentUser.avatar_url
-              } 
-            }),
-            
-            // TUNGGU 3 DETIK (Buffer agar data stabil di server)
-            new Promise(resolve => setTimeout(resolve, 3000))
-          ]);
+          // A. UPDATE TABEL (Wajib Await biar nggak hilang pas refresh)
+          // Ini biasanya cuma 0.1 - 0.2 detik.
+          const { error: dbError } = await supabase
+            .from('profiles')
+            .upsert(dbData, { onConflict: 'id' });
 
-          // Terakhir, sinkronkan ulang dari server sebelum selesai
-          await get().syncProfile();
+          if (dbError) throw dbError;
 
-          console.log("✅ [Sync] Data SUKSES terpaku permanen di Cloud.");
+          // B. UPDATE AUTH (Gak perlu Await! Ini yang bikin lemot)
+          // Biarkan proses ini jalan di belakang tanpa nahan kamu.
+          supabase.auth.updateUser({ 
+            data: {
+              full_name: cleanUpdates.name || currentUser.name,
+              avatar_url: cleanUpdates.avatar_url || currentUser.avatar_url
+            } 
+          });
+
+          console.log("✅ [TurboSync] Selesai Kilat!");
         } catch (error: any) {
-          console.error("❌ [Sync] ERROR KRUSIAL:", error.message);
-          toast.error("Gagal simpan permanen: " + error.message);
+          console.error("❌ [TurboSync] Gagal simpan:", error.message);
+          toast.error("Gagal simpan: " + error.message);
         }
       },
 
