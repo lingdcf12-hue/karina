@@ -399,7 +399,7 @@ export const useMusicStore = create<MusicStore>()(
           return;
         }
 
-        // Ambil data dari tabel profiles (Ini sumber kebenaran permanen kita)
+        // Ambil data dari tabel profiles
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -407,7 +407,7 @@ export const useMusicStore = create<MusicStore>()(
           .maybeSingle();
 
         if (profileError) {
-          console.warn("⚠️ [Supabase] Database profiles belum terbaca. Pastikan tabel 'profiles' sudah dibuat.", profileError.message);
+          console.warn("⚠️ [Supabase] Database profiles belum terbaca.", profileError.message);
         } else {
           console.log("✅ [Supabase] Terhubung ke Database Profiles.");
         }
@@ -418,9 +418,11 @@ export const useMusicStore = create<MusicStore>()(
         const finalName = profile?.full_name || authMetadata.full_name || authMetadata.name || authUser.email?.split('@')[0];
         const finalAvatar = profile?.avatar_url || authMetadata.avatar_url || null;
 
-        // Jika di DB belum ada tapi di Metadata ada, ini saatnya mencatat ke DB (Auto-Repair)
-        if (!profile && authMetadata.full_name) {
-          console.log("🛠️ [Sync] Menginisialisasi data di tabel profiles...");
+        // AUTO-REPAIR: Jika di DB kosong/NULL tapi di Metadata ada isinya, kita sinkronkan sekarang juga!
+        const needsRepair = !profile || (authMetadata.full_name && !profile.full_name) || (authMetadata.avatar_url && !profile.avatar_url);
+
+        if (needsRepair) {
+          console.log("🛠️ [Sync] Mendeteksi data kosong/NULL, melakukan Auto-Repair ke tabel profiles...");
           await supabase.from('profiles').upsert({
             id: authUser.id,
             full_name: finalName,
@@ -440,7 +442,6 @@ export const useMusicStore = create<MusicStore>()(
           } 
         });
         
-        // Fetch collection juga setelah profile sinkron
         get().fetchCollection();
       },
 
@@ -449,12 +450,19 @@ export const useMusicStore = create<MusicStore>()(
         const currentUser = state.user;
         if (!currentUser) return;
 
+        // Sanitasi: Pastikan tidak menyimpan Blob URL ke database
+        const cleanUpdates = { ...updates };
+        if (cleanUpdates.avatar_url?.startsWith('blob:')) {
+            console.warn("⚠️ [UpdateProfile] Menolak menyimpan Blob URL, mencari aslinya...");
+            delete cleanUpdates.avatar_url;
+        }
+
         // 1. Optimistic Update (Respons langsung di UI)
         set((state) => ({
           user: state.user ? {
             ...state.user,
-            name: updates.name ?? state.user.name,
-            avatar_url: updates.avatar_url ?? state.user.avatar_url
+            name: cleanUpdates.name ?? state.user.name,
+            avatar_url: cleanUpdates.avatar_url ?? state.user.avatar_url
           } : null
         }));
 
@@ -466,21 +474,21 @@ export const useMusicStore = create<MusicStore>()(
           
           // Data untuk Auth (Metadata)
           const authData: any = {};
-          if ('name' in updates) {
-            authData.name = updates.name;
-            authData.full_name = updates.name;
+          if ('name' in cleanUpdates) {
+            authData.name = cleanUpdates.name;
+            authData.full_name = cleanUpdates.name;
           }
-          if ('avatar_url' in updates) authData.avatar_url = updates.avatar_url;
+          if ('avatar_url' in cleanUpdates) authData.avatar_url = cleanUpdates.avatar_url;
 
-          // Data untuk Tabel Database
+          // Data untuk Tabel Database (Profiles)
           const dbData: any = { 
             id: userId, 
             updated_at: new Date().toISOString() 
           };
-          if ('name' in updates) dbData.full_name = updates.name;
-          if ('avatar_url' in updates) dbData.avatar_url = updates.avatar_url;
+          if ('name' in cleanUpdates) dbData.full_name = cleanUpdates.name;
+          if ('avatar_url' in cleanUpdates) dbData.avatar_url = cleanUpdates.avatar_url;
 
-          console.log("⚡ [FastSync] Mengirim data ke Supabase...", { hasName: !!dbData.full_name, hasAvatar: !!dbData.avatar_url });
+          console.log("⚡ [FastSync] Mengirim data valid ke Supabase...", dbData);
 
           // JALANKAN SERENTAK
           const [authResult, dbResult] = await Promise.all([
@@ -489,14 +497,11 @@ export const useMusicStore = create<MusicStore>()(
           ]);
 
           if (authResult.error) throw authResult.error;
-          if (dbResult.error) {
-             console.error("❌ [DB Error] Gagal update tabel profiles:", dbResult.error.message);
-             // Jika tabel gagal, kita tetap lanjut karena metadata sudah masuk
-          }
+          if (dbResult.error) throw dbResult.error;
 
           console.log("✅ [FastSync] Sinkronasi Berhasil.");
           
-          // 2. FORCE SYNC: Tarik data terbaru dari server untuk memastikan presisi 100%
+          // 2. FORCE SYNC: Tarik data terbaru untuk memastikan persistensi
           await get().syncProfile();
 
         } catch (error: any) {

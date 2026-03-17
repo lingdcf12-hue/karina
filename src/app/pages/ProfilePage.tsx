@@ -115,41 +115,47 @@ export function ProfilePage() {
     });
   };
 
-  // State untuk menyimpan URL yang sudah diupload ke storage (Background Upload)
+  // State untuk menyimpan URL terbaru dari server
   const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
 
   const handleUpdateProfile = async () => {
     if (!newName.trim()) return;
     
-    // Jika masih ada upload yang berjalan, tunggu sebentar atau beri peringatan
     if (isUploading) {
-      toast.info("Sedang menyiapkan foto, tunggu sebentar...");
+      toast.info("Foto sedang diupload, tunggu sebentar ya bro...");
       return;
     }
 
     setIsEditing(true);
 
     try {
-      // Gunakan URL yang sudah diupload (background) atau URL lama
-      const finalAvatarUrl = uploadedAvatarUrl || user?.avatar_url || '';
+      // PRIORITAS URL:
+      // 1. URL yang baru saja diupload (uploadedAvatarUrl)
+      // 2. URL lama yang sudah ada di database (user?.avatar_url)
+      let finalAvatarUrl = uploadedAvatarUrl || user?.avatar_url || '';
 
-      console.log("🚀 [Save] Menyimpan data profil lengkap ke Supabase...");
+      // Proteksi dari link google yang nyangkut jika kita baru upload
+      if (uploadedAvatarUrl) {
+        finalAvatarUrl = uploadedAvatarUrl;
+      }
       
-      // Close modal early for better UX (Optimistic approach)
-      setShowEditModal(false);
+      console.log("🚀 [Save] Menghubungkan ke Database dengan URL:", finalAvatarUrl.slice(0, 40) + "...");
       
       await updateProfile({ 
         name: newName, 
         avatar_url: finalAvatarUrl 
       });
       
+      setShowEditModal(false);
       setPendingFile(null);
       setUploadedAvatarUrl(null);
-      toast.success('Profil berhasil diperbaharui!');
+      setLocalPreview(null);
+      toast.success('Profil permanen berhasil disimpan!');
     } catch (error: any) {
-      console.error("❌ [Save] Gagal total:", error.message);
-      toast.error('Gagal memperbaharui profil: ' + error.message);
+      console.error("❌ [Save] Gagal simpan:", error.message);
+      toast.error('Gagal simpan ke database: ' + error.message);
     } finally {
       setIsEditing(false);
     }
@@ -164,28 +170,27 @@ export function ProfilePage() {
       return;
     }
 
-    // 1. Tampilkan preview lokal instan
-    const localUrl = URL.createObjectURL(file);
-    useMusicStore.setState((state) => ({
-      user: state.user ? { ...state.user, avatar_url: localUrl } : null
-    }));
-
-    setPendingFile(file);
+    // Tampilkan preview lokal agar terasa cepat
+    const previewUrl = URL.createObjectURL(file);
+    setLocalPreview(previewUrl);
+    
     setIsUploading(true);
+    setPendingFile(file);
 
-    // 2. LANGSUNG UPLOAD DI BACKGROUND (Sambil user mikir/ketik nama)
     try {
-      console.log("🚀 [Background] Memulai kompresi & upload...");
+      console.log("📂 [Upload] Proses pengiriman ke Supabase Storage...");
       const compressed = await compressImage(file);
       const url = await uploadProfileImage(compressed);
       
       if (url) {
         setUploadedAvatarUrl(url);
-        console.log("✅ [Background] Upload selesai:", url);
+        console.log("✅ [Upload] Foto masuk storage! URL:", url);
+        toast.success("Foto siap disimpan!");
       }
     } catch (err: any) {
-      console.error("❌ [Background] Upload gagal:", err.message);
-      toast.error("Gagal mengunggah foto di latar belakang.");
+      console.error("❌ [Upload] Gagal:", err.message);
+      toast.error("Gagal mengirim foto ke storage.");
+      setLocalPreview(null);
     } finally {
       setIsUploading(false);
     }
@@ -364,14 +369,14 @@ export function ProfilePage() {
                 onClick={() => (document.getElementById('profile-file-input') as HTMLInputElement)?.click()}
                 className="relative group w-40 h-40 md:w-48 md:h-48 aspect-square flex-shrink-0 shadow-2xl cursor-pointer rounded-full overflow-hidden border-4 border-black/20"
               >
-                {user.avatar_url ? (
+                {localPreview || user.avatar_url ? (
                   <img 
-                    src={user.avatar_url} 
+                    src={localPreview || user.avatar_url} 
                     alt="" 
-                    className={`w-full h-full object-cover object-center transition-opacity ${isEditing ? 'opacity-30' : ''}`} 
+                    className={`w-full h-full object-cover object-center transition-opacity ${(isEditing || isUploading) ? 'opacity-30' : ''}`} 
                   />
                 ) : (
-                  <div className={`w-full h-full flex items-center justify-center bg-[#333] text-5xl font-black text-white/10 uppercase transition-opacity ${isEditing ? 'opacity-30' : ''}`}>
+                  <div className={`w-full h-full flex items-center justify-center bg-[#333] text-5xl font-black text-white/10 uppercase transition-opacity ${(isEditing || isUploading) ? 'opacity-30' : ''}`}>
                     {user.name?.[0]}
                   </div>
                 )}
@@ -381,9 +386,12 @@ export function ProfilePage() {
                   <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Pilih foto</span>
                 </div>
 
-                {isEditing && (
+                {(isEditing || isUploading) && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-8 h-8 border-4 border-[#1DB954] border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-[10px] font-bold text-white uppercase animate-pulse">{isUploading ? 'Uploading...' : 'Saving...'}</span>
+                    </div>
                   </div>
                 )}
                 
