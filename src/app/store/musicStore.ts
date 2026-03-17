@@ -457,10 +457,7 @@ export const useMusicStore = create<MusicStore>()(
         }));
 
         try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) return;
-
-          const userId = session.user.id;
+          const userId = currentUser.id; // Gunakan ID lokal, nggak perlu nanya server lagi
           
           const dbData: any = { 
             id: userId, 
