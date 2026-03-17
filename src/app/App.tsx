@@ -48,43 +48,45 @@ export default function App() {
       .then(res => res.json())
       .then(tracks => {
         if (tracks.length > 0 && !currentTrack) {
-          // We set it but don't play yet to respect autoplay policy
           setCurrentTrack(tracks[0]);
-          // Use a small hack to ensure isPlaying is false initially 
-          // (setCurrentTrack sets it to true currently)
           useMusicStore.setState({ isPlaying: false });
         }
       })
       .catch(err => console.error("Initial track fetch failed:", err));
 
-    // Supabase Auth Listener
+    const { syncProfile } = useMusicStore.getState();
+
+    // 1. Validasi Sesi yang Ada
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        setUser({ 
-          id: session.user.id, 
-          email: session.user.email,
-          name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
-          avatar_url: session.user.user_metadata?.avatar_url || null
-        });
-        fetchCollection();
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser({ 
-          id: session.user.id, 
-          email: session.user.email,
-          name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
-          avatar_url: session.user.user_metadata?.avatar_url || null
-        });
-        fetchCollection();
+        syncProfile();
       } else {
         setUser(null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // 2. Monitor Perubahan Auth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
+          await syncProfile();
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+    });
+
+    // 3. TAB FOCUS SYNC: Refresh data when user switches back to this tab
+    const handleFocus = () => {
+      syncProfile();
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   return (
@@ -92,7 +94,7 @@ export default function App() {
       {/* Auth Screen Overlay */}
       {(currentView === 'login' || currentView === 'register') && <AuthPage />}
 
-      {/* Guest Prompt Modals */}
+      <Toaster position="bottom-right" theme="dark" richColors />
       <GuestPromptModal />
 
       {/* Top Navigation */}
@@ -121,12 +123,8 @@ export default function App() {
         )}
       </div>
 
-      {/* Music Player - Fixed Bottom */}
       <MusicPlayer />
-      
-      {/* Mobile Navigation */}
       <BottomNav />
-      <Toaster position="bottom-right" theme="dark" richColors />
       
       {/* Custom Styles Injection */}
       <style>{`

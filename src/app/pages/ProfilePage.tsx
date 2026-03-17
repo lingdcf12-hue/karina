@@ -7,10 +7,18 @@ import {
   CheckCircle2, 
   Clock3,
   LogOut,
-  Camera
+  Camera,
+  X,
+  Trash2
 } from 'lucide-react';
 import { useMusicStore } from '../store/musicStore';
 import { formatTime } from '../utils/formatters';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from '../components/ui/dialog';
 import { toast } from 'sonner';
 
 export function ProfilePage() {
@@ -20,6 +28,11 @@ export function ProfilePage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [newName, setNewName] = useState(user?.name || '');
   const [isEditing, setIsEditing] = useState(false);
+
+  // Sync internal state when user data changes (e.g. from server)
+  useEffect(() => {
+    if (user?.name) setNewName(user.name);
+  }, [user?.name, showEditModal]);
 
   useEffect(() => {
     // For demo purposes, we use liked tracks as "top tracks"
@@ -52,13 +65,94 @@ export function ProfilePage() {
     setShowMenu(false);
   };
 
+  // State untuk menyimpan file yang dipilih tapi belum diupload
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  // Fungsi Pembantu: Kompres Gambar agar Upload Kilat
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 400; // Ukuran pas untuk profil (Spotify style)
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              resolve(file); // Fallback ke file asli jika gagal
+            }
+          }, 'image/jpeg', 0.8); // Kualitas 80% (Bagus & Sangat Ringan)
+        };
+      };
+    });
+  };
+
+  // State untuk menyimpan URL yang sudah diupload ke storage (Background Upload)
+  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   const handleUpdateProfile = async () => {
     if (!newName.trim()) return;
+    
+    // Jika masih ada upload yang berjalan, tunggu sebentar atau beri peringatan
+    if (isUploading) {
+      toast.info("Sedang menyiapkan foto, tunggu sebentar...");
+      return;
+    }
+
     setIsEditing(true);
-    await updateProfile({ name: newName });
-    setIsEditing(false);
-    setShowEditModal(false);
-    toast.success('Profil berhasil diperbaharui');
+
+    try {
+      // Gunakan URL yang sudah diupload (background) atau URL lama
+      const finalAvatarUrl = uploadedAvatarUrl || user?.avatar_url || '';
+
+      console.log("🚀 [Save] Menyimpan data profil lengkap ke Supabase...");
+      
+      // Close modal early for better UX (Optimistic approach)
+      setShowEditModal(false);
+      
+      await updateProfile({ 
+        name: newName, 
+        avatar_url: finalAvatarUrl 
+      });
+      
+      setPendingFile(null);
+      setUploadedAvatarUrl(null);
+      toast.success('Profil berhasil diperbaharui!');
+    } catch (error: any) {
+      console.error("❌ [Save] Gagal total:", error.message);
+      toast.error('Gagal memperbaharui profil: ' + error.message);
+    } finally {
+      setIsEditing(false);
+    }
   };
 
   const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,37 +164,66 @@ export function ProfilePage() {
       return;
     }
 
-    setIsEditing(true);
-    const toastId = toast.loading('Mengupload foto...');
-    
-    const url = await uploadProfileImage(file);
-    if (url) {
-      await updateProfile({ avatar_url: url });
-      toast.success('Foto profil berhasil diperbaharui', { id: toastId });
-    } else {
-      toast.error('Gagal mengupload foto', { id: toastId });
+    // 1. Tampilkan preview lokal instan
+    const localUrl = URL.createObjectURL(file);
+    useMusicStore.setState((state) => ({
+      user: state.user ? { ...state.user, avatar_url: localUrl } : null
+    }));
+
+    setPendingFile(file);
+    setIsUploading(true);
+
+    // 2. LANGSUNG UPLOAD DI BACKGROUND (Sambil user mikir/ketik nama)
+    try {
+      console.log("🚀 [Background] Memulai kompresi & upload...");
+      const compressed = await compressImage(file);
+      const url = await uploadProfileImage(compressed);
+      
+      if (url) {
+        setUploadedAvatarUrl(url);
+        console.log("✅ [Background] Upload selesai:", url);
+      }
+    } catch (err: any) {
+      console.error("❌ [Background] Upload gagal:", err.message);
+      toast.error("Gagal mengunggah foto di latar belakang.");
+    } finally {
+      setIsUploading(false);
     }
-    setIsEditing(false);
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-b from-[#404040] via-[#121212] to-[#121212] scrollbar-none pb-24">
       {/* Header Section */}
       <div className="p-6 md:p-8 flex flex-col gap-6">
-        <div className="flex items-end gap-6">
-          <div className="relative group shrink-0">
-            <div className="w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.5)] bg-[#282828] flex items-center justify-center">
+        <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 text-center sm:text-left">
+          <div 
+            className="relative group shrink-0 cursor-pointer"
+            onClick={() => setShowEditModal(true)}
+          >
+            <div className="w-40 h-40 md:w-48 md:h-48 aspect-square rounded-full overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.5)] bg-[#282828] flex items-center justify-center relative shrink-0 border-4 border-white/5">
               {user.avatar_url ? (
-                <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                <img 
+                  src={user.avatar_url} 
+                  alt={user.name} 
+                  className="w-full h-full object-cover object-center" 
+                />
               ) : (
-                <span className="text-5xl md:text-7xl font-bold text-white/20 uppercase">{user.name?.[0]}</span>
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#535353] to-[#282828]">
+                  <span className="text-6xl md:text-7xl font-bold text-white/20 uppercase select-none">{user.name?.[0]}</span>
+                </div>
               )}
+              
+              {/* Hover Overlay */}
+              <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+                <Pencil className="w-8 h-8 text-white mb-2" />
+                <span className="text-[12px] font-bold text-white uppercase tracking-wider">Ubah foto</span>
+              </div>
             </div>
           </div>
           
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 w-full">
             <span className="text-[12px] font-bold uppercase tracking-wider text-white">Profil</span>
-            <h1 className="text-4xl md:text-8xl font-black tracking-tight text-white mb-2">{user.name}</h1>
+            <h1 className="text-4xl md:text-6xl lg:text-8xl font-black tracking-tight text-white mb-2 truncate max-w-full">{user.name}</h1>
             <div className="flex items-center gap-1.5 text-[14px] font-bold text-white/80">
               <span className="hover:underline cursor-pointer">1 Pengikut</span>
               <span className="text-[6px] opacity-50">•</span>
@@ -218,69 +341,108 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* Edit Profile Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#282828] rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <h2 className="text-2xl font-black text-white mb-6">Detail profil</h2>
-            
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col items-center gap-4">
-                <div className="relative group w-32 h-32 rounded-full overflow-hidden bg-[#333] shadow-xl">
-                  {user.avatar_url ? (
-                    <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-4xl font-black text-white/10 uppercase">
-                      {user.name?.[0]}
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                    <Camera className="w-8 h-8 text-white mb-1" />
-                    <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Ganti foto</span>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleProfileImageChange}
-                      className="absolute inset-0 opacity-0 cursor-pointer" 
-                    />
+      {/* Edit Profile Modal - Playlist Style */}
+      <Dialog open={showEditModal} onOpenChange={(open) => !open && setShowEditModal(false)}>
+        <DialogContent className="bg-[#282828] border-none text-white max-w-[524px] p-6 shadow-2xl">
+          {/* Aesthetic Close Button */}
+          <button
+            onClick={() => setShowEditModal(false)}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/10 text-white/70 hover:text-white transition-all duration-200 hover:scale-110 hover:shadow-[0_0_12px_rgba(255,255,255,0.2)] group z-10"
+            aria-label="Tutup"
+          >
+            <X className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90" />
+          </button>
+
+          <DialogHeader className="mb-4 text-left">
+            <DialogTitle className="text-2xl font-bold">Edit detail profil</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
+            {/* Left: Round Avatar Editor */}
+            <div className="flex flex-col items-center md:items-start gap-2">
+              <div 
+                onClick={() => (document.getElementById('profile-file-input') as HTMLInputElement)?.click()}
+                className="relative group w-40 h-40 md:w-48 md:h-48 aspect-square flex-shrink-0 shadow-2xl cursor-pointer rounded-full overflow-hidden border-4 border-black/20"
+              >
+                {user.avatar_url ? (
+                  <img 
+                    src={user.avatar_url} 
+                    alt="" 
+                    className={`w-full h-full object-cover object-center transition-opacity ${isEditing ? 'opacity-30' : ''}`} 
+                  />
+                ) : (
+                  <div className={`w-full h-full flex items-center justify-center bg-[#333] text-5xl font-black text-white/10 uppercase transition-opacity ${isEditing ? 'opacity-30' : ''}`}>
+                    {user.name?.[0]}
                   </div>
+                )}
+                
+                <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="w-10 h-10 mb-2 text-white" />
+                  <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Pilih foto</span>
                 </div>
+
+                {isEditing && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+                
+                <input 
+                  id="profile-file-input"
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleProfileImageChange}
+                  className="hidden" 
+                />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-white/60 px-1">Nama</label>
+              {user.avatar_url && (
+                <button 
+                  onClick={async () => {
+                    await updateProfile({ avatar_url: '' });
+                    toast.success('Foto dihapus');
+                  }}
+                  className="flex items-center gap-2 text-xs text-[#b3b3b3] hover:text-white mt-1 w-fit transition-colors px-1 h-8"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Hapus foto
+                </button>
+              )}
+            </div>
+
+            {/* Right: Name Form */}
+            <div className="flex flex-col gap-4 flex-1 w-full pt-2">
+              <div className="space-y-1.5 focus-within:z-10 relative">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-white/60 px-1 absolute -top-2.5 left-2 bg-[#282828] px-1 z-20">Nama Tampilan</label>
                 <input 
                   type="text" 
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="Nama kamu"
-                  className="w-full bg-[#3e3e3e] border-none rounded-lg py-3 px-4 text-white focus:ring-1 focus:ring-white/20 transition-shadow outline-none"
+                  className="w-full bg-[#3e3e3e] border border-transparent focus:border-white/20 rounded p-3 pt-4 text-sm outline-none transition-all placeholder-white/20"
                 />
               </div>
-
-              <div className="flex items-center justify-end gap-3 mt-4">
-                <button 
-                  onClick={() => setShowEditModal(false)}
-                  className="px-6 py-2.5 text-[14px] font-bold text-white hover:scale-105 transition-transform"
-                >
-                  Batal
-                </button>
-                <button 
-                  onClick={handleUpdateProfile}
-                  disabled={isEditing || !newName.trim()}
-                  className="bg-white text-black px-8 py-2.5 rounded-full text-[14px] font-bold hover:scale-105 transition-transform disabled:opacity-50 disabled:scale-100"
-                >
-                  {isEditing ? 'Menyimpan...' : 'Simpan'}
-                </button>
-              </div>
+              <p className="text-[11px] text-white/40 leading-relaxed px-1">
+                Gunakan nama asli atau nama panggungmu. Ini akan tampil di profil dan setiap playlist yang kamu buat.
+              </p>
             </div>
-            
-            <p className="text-[10px] text-white/30 mt-8 text-center px-4">
-              Dengan melanjutkan, kamu setuju untuk memberikan akses ke gambar yang kamu pilih. Jangan upload konten yang melanggar hak cipta.
-            </p>
           </div>
-        </div>
-      )}
+
+          <div className="flex flex-col items-end mt-6">
+            <button 
+              onClick={handleUpdateProfile}
+              disabled={isEditing || !newName.trim()}
+              className="bg-white text-black px-10 py-3 rounded-full font-bold text-sm hover:scale-105 transition-transform disabled:opacity-50 disabled:scale-100 min-w-[140px]"
+            >
+              {isEditing ? 'Menyimpan...' : 'Simpan'}
+            </button>
+          </div>
+
+          <p className="text-[10px] text-white/30 mt-4 leading-normal">
+            Dengan melanjutkan, kamu setuju untuk memberikan akses ke gambar yang kamu pilih. Pastikan kamu memiliki hak untuk mengunggah gambar tersebut.
+          </p>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

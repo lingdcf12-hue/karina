@@ -135,7 +135,11 @@ export function MusicPlayer() {
             'fs': 0,
             'rel': 0,
             'showinfo': 0,
-            'iv_load_policy': 3
+            'iv_load_policy': 3,
+            'origin': window.location.origin,
+            'enablejsapi': 1,
+            'widget_referrer': window.location.origin,
+            'host': 'https://www.youtube.com'
           },
           events: {
             'onReady': (event: any) => {

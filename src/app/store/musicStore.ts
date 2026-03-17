@@ -25,6 +25,7 @@ interface MusicStore extends PlayerState {
   // Profile
   updateProfile: (updates: { name?: string; avatar_url?: string }) => Promise<void>;
   uploadProfileImage: (file: File) => Promise<string | null>;
+  syncProfile: () => Promise<void>;
   // Spotify Specific
   likedTracks: Track[]; // full track objects
   toggleLike: (track: Track) => void;
@@ -389,29 +390,115 @@ export const useMusicStore = create<MusicStore>()(
 
       setDominantColor: (color) => set({ dominantColor: color }),
 
-      updateProfile: async (updates) => {
-        const currentUser = get().user;
-        if (!currentUser) return;
-
-        const { data, error } = await supabase.auth.updateUser({
-          data: { 
-            name: updates.name || currentUser.name,
-            avatar_url: updates.avatar_url || currentUser.avatar_url
-          }
-        });
-
-        if (error) {
-          toast.error("Gagal update profil: " + error.message);
+      syncProfile: async () => {
+        // Ambil user terbaru langsung dari auth session
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !authUser) {
+          set({ user: null });
           return;
         }
 
-        set((state) => ({
+        // Ambil data dari tabel profiles (Ini sumber kebenaran permanen kita)
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.warn("⚠️ [Supabase] Database profiles belum terbaca. Pastikan tabel 'profiles' sudah dibuat.", profileError.message);
+        } else {
+          console.log("✅ [Supabase] Terhubung ke Database Profiles.");
+        }
+
+        const authMetadata = authUser.user_metadata || {};
+        
+        // Prioritas data: Database (Profiles) -> Auth Metadata -> Email
+        const finalName = profile?.full_name || authMetadata.full_name || authMetadata.name || authUser.email?.split('@')[0];
+        const finalAvatar = profile?.avatar_url || authMetadata.avatar_url || null;
+
+        // Jika di DB belum ada tapi di Metadata ada, ini saatnya mencatat ke DB (Auto-Repair)
+        if (!profile && authMetadata.full_name) {
+          console.log("🛠️ [Sync] Menginisialisasi data di tabel profiles...");
+          await supabase.from('profiles').upsert({
+            id: authUser.id,
+            full_name: finalName,
+            avatar_url: finalAvatar,
+            updated_at: new Date().toISOString()
+          });
+        }
+
+        console.log("👤 [User] Profile loaded:", { finalName, hasAvatar: !!finalAvatar });
+
+        set({ 
           user: { 
-            ...state.user, 
-            name: updates.name || state.user.name,
-            avatar_url: updates.avatar_url || state.user.avatar_url
-          }
+            id: authUser.id, 
+            email: authUser.email,
+            name: finalName,
+            avatar_url: finalAvatar
+          } 
+        });
+        
+        // Fetch collection juga setelah profile sinkron
+        get().fetchCollection();
+      },
+
+      updateProfile: async (updates) => {
+        const state = get();
+        const currentUser = state.user;
+        if (!currentUser) return;
+
+        // 1. KILAT: Update LOCAL state langsung (Optimistic)
+        set((state) => ({
+          user: state.user ? {
+            ...state.user,
+            name: updates.name ?? state.user.name,
+            avatar_url: updates.avatar_url ?? state.user.avatar_url
+          } : null
         }));
+
+        // 2. PARALEL: Update Auth & DB secara bersamaan (Biar gak antre)
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) return;
+
+          const userId = session.user.id;
+          
+          // Siapkan data untuk Auth
+          const authData: any = {};
+          if ('name' in updates) {
+            authData.name = updates.name;
+            authData.full_name = updates.name;
+          }
+          if ('avatar_url' in updates) {
+            authData.avatar_url = updates.avatar_url;
+          }
+
+          // Siapkan data untuk Database
+          const dbData: any = { 
+            id: userId, 
+            updated_at: new Date().toISOString() 
+          };
+          if ('name' in updates) dbData.full_name = updates.name;
+          if ('avatar_url' in updates) dbData.avatar_url = updates.avatar_url;
+
+          // JALANKAN SERENTAK (Parallel Execution)
+          console.log("⚡ [FastSync] Memperbarui Metadata & Database...");
+          const [authResult, dbResult] = await Promise.all([
+            supabase.auth.updateUser({ data: authData }),
+            supabase.from('profiles').upsert(dbData, { onConflict: 'id' })
+          ]);
+
+          if (authResult.error) throw authResult.error;
+          if (dbResult.error) console.warn("⚠️ DB Upsert Slow/Error:", dbResult.error.message);
+
+          console.log("✅ [FastSync] Berhasil disimpan secara paralel");
+        } catch (error: any) {
+          console.error("❌ [FastSync] Gagal:", error.message);
+          toast.error("Gagal sinkronasi permanen: " + error.message);
+          throw error;
+        }
       },
 
       uploadProfileImage: async (file) => {
@@ -422,23 +509,29 @@ export const useMusicStore = create<MusicStore>()(
         const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`;
         const filePath = `avatars/${fileName}`;
 
-        const { error } = await supabase.storage
-          .from('profiles')
-          .upload(filePath, file);
+        console.log("📂 Memulai upload ke profiles/avatars...", filePath);
 
-        if (error) {
-          if (error.message.includes("bucket not found")) {
-            toast.error("Bucket 'profiles' belum dibuat di Supabase.");
-          } else {
-            toast.error("Gagal upload foto: " + error.message);
-          }
-          return null;
+        // Upload ke Storage dengan ContentType eksplisit
+        const { error: uploadError } = await supabase.storage
+          .from('profiles')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            contentType: 'image/jpeg', // Paksa JPEG karena hasil kompresi kita JPEG
+            upsert: false // Pakai false saja karena nama file sudah unik (biar gak bentrok izin UPDATE)
+          });
+
+        if (uploadError) {
+          console.error("❌ Storage Error Detail:", uploadError);
+          // Return error message agar bisa ditampilkan di UI
+          throw new Error(uploadError.message);
         }
 
+        // Ambil Public URL
         const { data: { publicUrl } } = supabase.storage
           .from('profiles')
           .getPublicUrl(filePath);
 
+        console.log("✅ Upload Berhasil. URL:", publicUrl);
         return publicUrl;
       },
 
@@ -553,6 +646,11 @@ export const useMusicStore = create<MusicStore>()(
       storage: createJSONStorage(() => localStorage),
       // Only persist certain pieces of state
       partialize: (state) => ({
+        user: state.user ? {
+          ...state.user,
+          // Jangan simpan blob: URL ke localStorage karena akan mati/error saat refresh
+          avatar_url: state.user.avatar_url?.startsWith('blob:') ? null : state.user.avatar_url
+        } : null,
         collection: state.collection,
         likedTracks: state.likedTracks,
         volume: state.volume,

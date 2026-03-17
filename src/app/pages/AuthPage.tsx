@@ -69,7 +69,7 @@ function AlbumGrid() {
 }
 
 export function AuthPage() {
-  const { currentView, setCurrentView, setUser, fetchCollection, guestPromptTrack, setGuestPromptTrack } = useMusicStore();
+  const { currentView, setCurrentView, setUser, fetchCollection, guestPromptTrack, setGuestPromptTrack, user } = useMusicStore();
   const isLogin = currentView === 'login';
 
   const [email, setEmail] = useState('');
@@ -86,18 +86,32 @@ export function AuthPage() {
       if (isLogin) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        const userName = data.user.user_metadata?.name || email.split('@')[0];
-        setUser({ id: data.user.id, name: userName, email: data.user.email });
+        
+        const metadata = data.user.user_metadata;
+        const userName = metadata?.full_name || metadata?.name || email.split('@')[0];
+        const avatarUrl = metadata?.avatar_url || null;
+        
+        setUser({ 
+          id: data.user.id, 
+          name: userName, 
+          email: data.user.email,
+          avatar_url: avatarUrl 
+        });
+        
         fetchCollection();
         toast.success(`Selamat datang kembali, ${userName}!`);
-        // Jika ada guestPromptTrack, bersihkan setelah login
         if (guestPromptTrack) setGuestPromptTrack(null);
         setCurrentView('home');
       } else {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { name: name || email.split('@')[0] } }
+          options: { 
+            data: { 
+              name: name || email.split('@')[0],
+              full_name: name || email.split('@')[0]
+            } 
+          }
         });
         if (error) throw error;
         toast.success('Pendaftaran berhasil! Silahkan masuk dengan akun barumu.');

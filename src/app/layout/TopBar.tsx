@@ -17,16 +17,14 @@ export function TopBar() {
           <div className="relative md:hidden">
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="w-8 h-8 rounded-full overflow-hidden bg-[#535353] border border-white/10"
+              className="w-8 h-8 aspect-square rounded-full overflow-hidden bg-[#535353] border border-white/10 shrink-0"
             >
               {user.avatar_url ? (
-                <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover object-center" />
               ) : (
-                <img
-                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name || user.email}&backgroundColor=535353&textColor=ffffff`}
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                />
+                <div className="w-full h-full flex items-center justify-center bg-[#535353]">
+                  <span className="text-[10px] font-bold text-white uppercase">{user.name?.[0]}</span>
+                </div>
               )}
             </button>
             {isMenuOpen && (
@@ -183,16 +181,14 @@ export function TopBar() {
             <div className="relative ml-1 shrink-0 hidden md:block">
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="w-8 h-8 rounded-full overflow-hidden hover:scale-105 transition-all ring-2 ring-transparent hover:ring-white/30 bg-[#535353]"
+                className="w-8 h-8 aspect-square rounded-full overflow-hidden hover:scale-105 transition-all ring-2 ring-transparent hover:ring-white/30 bg-[#535353] shrink-0"
               >
                 {user.avatar_url ? (
-                  <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                  <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover object-center" />
                 ) : (
-                  <img
-                    src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name || user.email}&backgroundColor=535353&textColor=ffffff`}
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                  />
+                  <div className="w-full h-full flex items-center justify-center bg-[#535353]">
+                    <span className="text-[10px] font-bold text-white uppercase">{user.name?.[0]}</span>
+                  </div>
                 )}
               </button>
               {isMenuOpen && (
