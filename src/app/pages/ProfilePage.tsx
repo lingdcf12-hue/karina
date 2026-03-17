@@ -115,47 +115,27 @@ export function ProfilePage() {
     });
   };
 
-  // State untuk menyimpan URL terbaru dari server
-  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
 
+  // State untuk menyimpan URL terbaru dari server
   const handleUpdateProfile = async () => {
     if (!newName.trim()) return;
     
-    if (isUploading) {
-      toast.info("Foto sedang diupload, tunggu sebentar ya bro...");
-      return;
-    }
-
     setIsEditing(true);
 
     try {
-      // PRIORITAS URL:
-      // 1. URL yang baru saja diupload (uploadedAvatarUrl)
-      // 2. URL lama yang sudah ada di database (user?.avatar_url)
-      let finalAvatarUrl = uploadedAvatarUrl || user?.avatar_url || '';
-
-      // Proteksi dari link google yang nyangkut jika kita baru upload
-      if (uploadedAvatarUrl) {
-        finalAvatarUrl = uploadedAvatarUrl;
-      }
+      console.log("🚀 [Instant] Menyimpan nama...");
       
-      console.log("🚀 [Save] Menghubungkan ke Database dengan URL:", finalAvatarUrl.slice(0, 40) + "...");
+      // Update nama saja secara instan
+      await updateProfile({ name: newName });
       
-      await updateProfile({ 
-        name: newName, 
-        avatar_url: finalAvatarUrl 
-      });
-      
+      // Tutup modal detik ini juga!
       setShowEditModal(false);
-      setPendingFile(null);
-      setUploadedAvatarUrl(null);
-      setLocalPreview(null);
-      toast.success('Profil permanen berhasil disimpan!');
+      toast.success('Nama berhasil diperbaharui!');
     } catch (error: any) {
-      console.error("❌ [Save] Gagal simpan:", error.message);
-      toast.error('Gagal simpan ke database: ' + error.message);
+      console.error("❌ [Instant] Gagal:", error.message);
+      toast.error('Gagal simpan: ' + error.message);
     } finally {
       setIsEditing(false);
     }
@@ -170,26 +150,27 @@ export function ProfilePage() {
       return;
     }
 
-    // Tampilkan preview lokal agar terasa cepat
+    // 1. Tampilkan preview lokal biar "berasa" kenceng
     const previewUrl = URL.createObjectURL(file);
     setLocalPreview(previewUrl);
-    
     setIsUploading(true);
-    setPendingFile(file);
 
     try {
-      console.log("📂 [Upload] Proses pengiriman ke Supabase Storage...");
+      console.log("📂 [Auto-Sync] Memulai upload foto...");
       const compressed = await compressImage(file);
       const url = await uploadProfileImage(compressed);
       
       if (url) {
-        setUploadedAvatarUrl(url);
-        console.log("✅ [Upload] Foto masuk storage! URL:", url);
-        toast.success("Foto siap disimpan!");
+        // 2. AUTO-SAVE: Begitu upload beres, langsung tembak ke database profiles!
+        // Nggak perlu nunggu user klik tombol "Simpan" lagi.
+        await updateProfile({ avatar_url: url });
+        
+        console.log("✅ [Auto-Sync] Foto sudah aman di Database.");
+        toast.success("Foto profil berhasil diperbaharui!");
       }
     } catch (err: any) {
-      console.error("❌ [Upload] Gagal:", err.message);
-      toast.error(`Gagal upload: ${err.message || 'Cek koneksi/Storage'}`);
+      console.error("❌ [Auto-Sync] Gagal:", err.message);
+      toast.error(`Gagal upload: ${err.message}`);
       setLocalPreview(null);
     } finally {
       setIsUploading(false);
